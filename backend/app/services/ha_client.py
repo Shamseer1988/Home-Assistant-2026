@@ -63,3 +63,28 @@ class HAClient:
         )
         r.raise_for_status()
         return r.json()
+
+    def get_camera_image(self, entity_id):
+        r = self.session.get(self._url(f"/api/camera_proxy/{entity_id}"), timeout=self.timeout)
+        r.raise_for_status()
+        return r.content, r.headers.get("Content-Type", "image/jpeg")
+
+    def get_forecast(self, entity_id, forecast_type="daily"):
+        r = self.session.post(
+            self._url("/api/services/weather/get_forecasts"),
+            params={"return_response": "true"},
+            json={"entity_id": entity_id, "type": forecast_type},
+            timeout=self.timeout,
+        )
+        r.raise_for_status()
+        data = r.json()
+        # REST may return the response directly, keyed by entity, or wrapped.
+        resp = data
+        if isinstance(data, dict):
+            if "service_response" in data:
+                resp = data["service_response"]
+            if isinstance(resp, dict) and entity_id in resp:
+                resp = resp[entity_id]
+        if isinstance(resp, dict):
+            return resp.get("forecast", [])
+        return []

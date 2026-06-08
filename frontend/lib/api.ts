@@ -1,4 +1,4 @@
-import type { Health, HistorySeries } from "./types";
+import type { ForecastItem, Health, HistorySeries } from "./types";
 
 // Baked at build time (see Dockerfile build arg / .env PUBLIC_API_URL).
 // The browser uses this to reach the Flask backend + Socket.IO.
@@ -43,5 +43,13 @@ export async function callService(
 
 export const fetchHistory = (entityId: string, hours = 24) =>
   apiGet<HistorySeries>(`/api/ha/history/${entityId}?hours=${hours}`);
+
+export const cameraUrl = (entityId: string) =>
+  `${API_URL}/api/ha/camera/${entityId}`;
+
+export const fetchForecast = (entityId: string, type = "daily") =>
+  apiGet<{ entity_id: string; forecast: ForecastItem[] }>(
+    `/api/ha/forecast/${entityId}?type=${type}`
+  );
 
 export type { Health };

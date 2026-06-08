@@ -24,6 +24,10 @@ Assistant server, and connects to HA over the LAN via its API.
   light brightness/colour, fan speed, a climate dial, cover & volume sliders,
   media transport, and 24h sensor sparklines.
 - **Installable PWA** (manifest + icons) for phones and wall tablets.
+- **Special views** in the nav: a **CCTV camera grid** (token-free snapshot proxy),
+  **Energy** (solar/grid power & today's kWh), **Weather** with a 7-day forecast,
+  **Security** (Alarmo arm/disarm + door/motion sensors), and **More** (water-tank
+  gauge, prayer times, system stats, and Grafana/Jellyfin embeds).
 - **Admin login** (JWT cookies) with a protected `/admin` area, and a one-click
   **"Sync rooms from Home Assistant"** importer that builds the layout from your
   areas (disabled/hidden/diagnostic entities skipped). The layout persists in
@@ -90,6 +94,8 @@ NEXT_PUBLIC_API_URL=http://localhost:5000 npm run dev
 | GET  | `/api/ha/states/<entity_id>` | One entity's state |
 | POST | `/api/ha/services/<domain>/<service>` | Call a HA service (body = service data) |
 | GET  | `/api/ha/history/<entity_id>?hours=` | Numeric history for sparklines |
+| GET  | `/api/ha/camera/<entity_id>` | Camera snapshot proxy (no token in browser) |
+| GET  | `/api/ha/forecast/<entity_id>?type=` | Weather forecast (via `weather.get_forecasts`) |
 | GET  | `/api/ha/areas` | Area / device / entity registries (for future room grouping) |
 | GET  | `/api/ha/config` | Home Assistant config (location, version) |
 | WS   | `/socket.io` | `snapshot` on connect, then `state_changed` / `state_removed` |

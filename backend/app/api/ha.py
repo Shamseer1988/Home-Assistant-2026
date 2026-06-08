@@ -3,7 +3,7 @@
 The browser talks only to these routes — never to Home Assistant directly —
 so the HA token stays server-side.
 """
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request
 
 from ..services.state_store import store
 
@@ -80,3 +80,23 @@ def history(entity_id):
             continue
         points.append({"t": entry.get("last_changed") or entry.get("last_updated"), "v": value})
     return jsonify({"entity_id": entity_id, "points": points})
+
+
+@bp.get("/camera/<path:entity_id>")
+def camera(entity_id):
+    """Proxy a camera snapshot so the browser never needs the HA token."""
+    try:
+        content, content_type = current_app.ha_client.get_camera_image(entity_id)
+    except Exception as e:  # noqa: BLE001
+        return jsonify({"error": str(e)}), 502
+    return Response(content, content_type=content_type, headers={"Cache-Control": "no-store"})
+
+
+@bp.get("/forecast/<path:entity_id>")
+def forecast(entity_id):
+    forecast_type = request.args.get("type", "daily")
+    try:
+        data = current_app.ha_client.get_forecast(entity_id, forecast_type)
+        return jsonify({"entity_id": entity_id, "forecast": data})
+    except Exception as e:  # noqa: BLE001
+        return jsonify({"error": str(e)}), 502

@@ -1,9 +1,10 @@
 import {
+  Cctv,
+  CloudSun,
   Home,
   LayoutGrid,
+  ShieldCheck,
   Zap,
-  CloudSun,
-  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -13,11 +14,11 @@ export interface NavItem {
   href: string;
 }
 
-// Phase 1: single dashboard page. Other destinations land in later phases.
 export const NAV_ITEMS: NavItem[] = [
   { label: "Home", icon: Home, href: "/" },
-  { label: "Devices", icon: LayoutGrid, href: "/devices" },
+  { label: "Cameras", icon: Cctv, href: "/cameras" },
   { label: "Energy", icon: Zap, href: "/energy" },
   { label: "Weather", icon: CloudSun, href: "/weather" },
-  { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "Security", icon: ShieldCheck, href: "/security" },
+  { label: "More", icon: LayoutGrid, href: "/more" },
 ];

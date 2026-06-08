@@ -85,3 +85,12 @@ export interface HistorySeries {
   entity_id: string;
   points: HistoryPoint[];
 }
+
+export interface ForecastItem {
+  datetime: string;
+  condition?: string;
+  temperature?: number;
+  templow?: number;
+  precipitation?: number;
+  [key: string]: unknown;
+}

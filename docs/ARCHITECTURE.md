@@ -136,7 +136,7 @@ media) in Phase 5. Only the **layout** lives in the DB; live values come from HA
 | 3 | Dynamic dashboard from DB + importer that seeds rooms/entities from HA areas | **done** |
 | 4 | Admin builder: rooms + tiles CRUD, entity picker, reorder/move, overrides, audit | **done** |
 | 5 | Rich controls (detail sheet), climate dial, sliders, media, sparklines, PWA | **done** |
-| 6 | Special views: cameras, solar/energy, water, prayer times, alarm, iframes | planned |
+| 6 | Special views: cameras, energy, weather + forecast, security, water/prayer, embeds | **done** |
 | 7 | Hardening: reverse proxy/HTTPS, rate limiting, tests, backups, prod deploy | planned |
 
 ---
