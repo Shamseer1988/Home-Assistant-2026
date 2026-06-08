@@ -85,6 +85,7 @@ def create_app(config_object=Config):
 
     # --- Blueprints ---
     from .api.admin import bp as admin_bp
+    from .api.admin_layout import bp as admin_layout_bp
     from .api.auth import bp as auth_bp
     from .api.dashboard import bp as dashboard_bp
     from .api.ha import bp as ha_bp
@@ -94,6 +95,7 @@ def create_app(config_object=Config):
     app.register_blueprint(ha_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_layout_bp)
     app.register_blueprint(dashboard_bp)
 
     # --- Socket.IO handlers (import registers the decorators) ---

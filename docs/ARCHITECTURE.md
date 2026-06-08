@@ -134,7 +134,7 @@ media) in Phase 5. Only the **layout** lives in the DB; live values come from HA
 | 1 | HA REST+WS bridge, live tiles, end-to-end toggle | **done** |
 | 2 | Auth & admin foundation (JWT cookies, seeded admin, route guards) | **done** |
 | 3 | Dynamic dashboard from DB + importer that seeds rooms/entities from HA areas | **done** |
-| 4 | Admin CRUD: add/edit sections, cards, entities-to-room, overrides, audit | planned |
+| 4 | Admin builder: rooms + tiles CRUD, entity picker, reorder/move, overrides, audit | **done** |
 | 5 | Rich card library, charts, animations, responsive polish, PWA | planned |
 | 6 | Special views: cameras, solar/energy, water, prayer times, alarm, iframes | planned |
 | 7 | Hardening: reverse proxy/HTTPS, rate limiting, tests, backups, prod deploy | planned |

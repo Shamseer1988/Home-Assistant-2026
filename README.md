@@ -24,6 +24,9 @@ Assistant server, and connects to HA over the LAN via its API.
   **"Sync rooms from Home Assistant"** importer that builds the layout from your
   areas (disabled/hidden/diagnostic entities skipped). The layout persists in
   SQLite; before any import the dashboard falls back to grouping by type.
+- **Dashboard builder** at `/admin/builder`: add / rename / reorder / delete
+  rooms, add entities via a searchable picker, and remove / rename / reorder /
+  move tiles between rooms — all persisted, no YAML. Admin actions are logged.
 
 ---
 
@@ -92,6 +95,12 @@ NEXT_PUBLIC_API_URL=http://localhost:5000 npm run dev
 | GET  | `/api/dashboard` | Default dashboard tree (rooms + tiles), overrides applied |
 | GET  | `/api/admin/overview` | Admin-only stats (JWT + admin role) |
 | POST | `/api/admin/import` | Admin-only: (re)build rooms from HA areas |
+| GET  | `/api/admin/layout` | Editable room/tile tree |
+| GET  | `/api/admin/entities` | Searchable entity list for the picker |
+| —    | `/api/admin/sections[/…]` | Rooms: create / update / delete / reorder |
+| —    | `/api/admin/items[/…]` | Tiles: add / update / move / delete / reorder |
+| PUT  | `/api/admin/overrides/<entity_id>` | Override a name/icon or hide an entity |
+| GET  | `/api/admin/audit` | Recent admin actions |
 
 ## Admin login (Phase 2)
 

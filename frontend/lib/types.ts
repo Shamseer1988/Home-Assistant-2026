@@ -34,3 +34,44 @@ export interface DashConfig {
   slug: string | null;
   sections: DashSection[];
 }
+
+// ---- Admin builder shapes ----
+export interface AdminOverride {
+  entity_id: string;
+  friendly_name: string | null;
+  icon: string | null;
+  hidden: boolean;
+}
+
+export interface AdminItem {
+  id: number;
+  section_id: number;
+  type: string;
+  entity_id: string | null;
+  label: string | null;
+  icon: string | null;
+  sort: number;
+  live_name: string | null;
+  override: AdminOverride | null;
+}
+
+export interface AdminSection {
+  id: number;
+  name: string;
+  icon: string | null;
+  sort: number;
+  items: AdminItem[];
+}
+
+export interface AdminLayout {
+  id: number | null;
+  name: string | null;
+  sections: AdminSection[];
+}
+
+export interface PickerEntity {
+  entity_id: string;
+  name: string;
+  domain: string;
+  state: string;
+}

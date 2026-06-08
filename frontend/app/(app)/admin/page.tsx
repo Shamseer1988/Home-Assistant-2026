@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowRight,
   Boxes,
   DownloadCloud,
   LayoutDashboard,
@@ -130,19 +132,21 @@ export default function AdminPage() {
         </p>
       )}
 
-      <Card className="flex items-start gap-4 p-6">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/5">
-          <LayoutDashboard className="h-5 w-5 text-sidra-sky" />
-        </span>
-        <div>
-          <h2 className="font-semibold text-white">Dashboard builder</h2>
-          <p className="mt-1 max-w-prose text-sm text-slate-400">
-            Coming in Phase 4: add and reorder rooms, drop entities into rooms,
-            and override names, icons and visibility — all from here. The import
-            above gives you the starting layout to refine.
-          </p>
-        </div>
-      </Card>
+      <Link href="/admin/builder" className="block">
+        <Card className="flex items-center gap-4 p-6 transition hover:bg-white/[0.07]">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sidra-blue to-sidra-sky">
+            <LayoutDashboard className="h-5 w-5 text-white" />
+          </span>
+          <div className="flex-1">
+            <h2 className="font-semibold text-white">Dashboard builder</h2>
+            <p className="mt-1 max-w-prose text-sm text-slate-400">
+              Add and reorder rooms, drop entities into rooms, rename and move
+              tiles — all from here, no YAML.
+            </p>
+          </div>
+          <ArrowRight className="h-5 w-5 shrink-0 text-slate-400" />
+        </Card>
+      </Link>
     </div>
   );
 }

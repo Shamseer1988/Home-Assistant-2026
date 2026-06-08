@@ -1,0 +1,288 @@
+"""Admin dashboard-builder CRUD (JWT + admin role).
+
+Rooms (sections), tiles (section items), entity placement, reordering, moving,
+and per-entity overrides — everything needed to build the dashboard from the UI
+without touching YAML.
+"""
+from flask import Blueprint, abort, current_app, jsonify, request
+from flask_jwt_extended import get_jwt_identity
+
+from ..extensions import db
+from ..models.audit import AuditLog
+from ..models.dashboard import Dashboard, EntityOverride, Section, SectionItem
+from ..services.state_store import store
+from ..utils.auth import admin_required
+
+bp = Blueprint("admin_layout", __name__, url_prefix="/api/admin")
+
+
+# --------------------------------------------------------------------- helpers
+def _get_or_404(model, pk):
+    obj = db.session.get(model, pk)
+    if obj is None:
+        abort(404)
+    return obj
+
+
+def _default_dashboard():
+    dash = Dashboard.query.filter_by(is_default=True).first()
+    if not dash:
+        dash = Dashboard(name="Home", slug="home", is_default=True, sort=0)
+        db.session.add(dash)
+        db.session.commit()
+    return dash
+
+
+def _next_sort(model, **filters):
+    current = db.session.query(db.func.max(model.sort)).filter_by(**filters).scalar()
+    return (current or 0) + 1
+
+
+def _audit(action, target=""):
+    try:
+        uid = int(get_jwt_identity())
+    except (TypeError, ValueError):
+        uid = None
+    db.session.add(AuditLog(user_id=uid, action=action, target=str(target)))
+
+
+def _name_of(entity_id):
+    st = store.get(entity_id) or {}
+    return st.get("attributes", {}).get("friendly_name") or entity_id
+
+
+def _section_dict(s):
+    return {"id": s.id, "name": s.name, "icon": s.icon, "sort": s.sort, "item_count": len(s.items)}
+
+
+def _item_dict(i):
+    return {
+        "id": i.id,
+        "section_id": i.section_id,
+        "type": i.type,
+        "entity_id": i.entity_id,
+        "label": i.label,
+        "icon": i.icon,
+        "sort": i.sort,
+    }
+
+
+def _override_dict(o):
+    return {
+        "entity_id": o.entity_id,
+        "friendly_name": o.friendly_name,
+        "icon": o.icon,
+        "hidden": o.hidden,
+    }
+
+
+# ----------------------------------------------------------------- editable tree
+@bp.get("/layout")
+@admin_required
+def get_layout():
+    dash = _default_dashboard()
+    overrides = {o.entity_id: o for o in EntityOverride.query.all()}
+    sections = []
+    for s in dash.sections:
+        items = []
+        for it in s.items:
+            ov = overrides.get(it.entity_id)
+            items.append(
+                {
+                    **_item_dict(it),
+                    "live_name": _name_of(it.entity_id) if it.entity_id else None,
+                    "override": _override_dict(ov) if ov else None,
+                }
+            )
+        sections.append({"id": s.id, "name": s.name, "icon": s.icon, "sort": s.sort, "items": items})
+    return jsonify({"id": dash.id, "name": dash.name, "sections": sections})
+
+
+@bp.get("/entities")
+@admin_required
+def list_entities():
+    """Searchable list of HA entities for the picker."""
+    q = (request.args.get("q") or "").lower()
+    out = []
+    for st in store.all():
+        eid = st.get("entity_id")
+        if not eid:
+            continue
+        name = st.get("attributes", {}).get("friendly_name") or eid
+        if q and q not in eid.lower() and q not in name.lower():
+            continue
+        out.append(
+            {"entity_id": eid, "name": name, "domain": eid.split(".")[0], "state": st.get("state")}
+        )
+    out.sort(key=lambda x: x["name"].lower())
+    return jsonify(out)
+
+
+# ------------------------------------------------------------------- sections
+@bp.post("/sections")
+@admin_required
+def create_section():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+    dash = _default_dashboard()
+    section = Section(
+        dashboard_id=dash.id,
+        name=name,
+        icon=data.get("icon") or None,
+        sort=_next_sort(Section, dashboard_id=dash.id),
+    )
+    db.session.add(section)
+    _audit("create_section", name)
+    db.session.commit()
+    return jsonify(_section_dict(section)), 201
+
+
+@bp.patch("/sections/<int:section_id>")
+@admin_required
+def update_section(section_id):
+    section = _get_or_404(Section, section_id)
+    data = request.get_json(silent=True) or {}
+    if "name" in data:
+        name = (data["name"] or "").strip()
+        if not name:
+            return jsonify({"error": "name is required"}), 400
+        section.name = name
+    if "icon" in data:
+        section.icon = data["icon"] or None
+    _audit("update_section", section.name)
+    db.session.commit()
+    return jsonify(_section_dict(section))
+
+
+@bp.delete("/sections/<int:section_id>")
+@admin_required
+def delete_section(section_id):
+    section = _get_or_404(Section, section_id)
+    _audit("delete_section", section.name)
+    db.session.delete(section)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@bp.post("/sections/reorder")
+@admin_required
+def reorder_sections():
+    order = (request.get_json(silent=True) or {}).get("order") or []
+    for index, sid in enumerate(order):
+        Section.query.filter_by(id=sid).update({"sort": index})
+    _audit("reorder_sections", ",".join(map(str, order)))
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+# ---------------------------------------------------------------------- items
+@bp.post("/sections/<int:section_id>/items")
+@admin_required
+def add_items(section_id):
+    section = _get_or_404(Section, section_id)
+    data = request.get_json(silent=True) or {}
+    entity_ids = data.get("entity_ids")
+    if not entity_ids and data.get("entity_id"):
+        entity_ids = [data["entity_id"]]
+    entity_ids = [e for e in (entity_ids or []) if e]
+    if not entity_ids:
+        return jsonify({"error": "entity_id(s) required"}), 400
+
+    sort = _next_sort(SectionItem, section_id=section.id) - 1
+    created = []
+    for eid in entity_ids:
+        sort += 1
+        item = SectionItem(section_id=section.id, type="entity", entity_id=eid, sort=sort)
+        db.session.add(item)
+        created.append(item)
+    _audit("add_items", f"{section.name}: {len(created)}")
+    db.session.commit()
+    return jsonify([_item_dict(i) for i in created]), 201
+
+
+@bp.patch("/items/<int:item_id>")
+@admin_required
+def update_item(item_id):
+    item = _get_or_404(SectionItem, item_id)
+    data = request.get_json(silent=True) or {}
+    if "label" in data:
+        item.label = data["label"] or None
+    if "icon" in data:
+        item.icon = data["icon"] or None
+    if data.get("section_id"):
+        target = _get_or_404(Section, data["section_id"])
+        item.section_id = target.id
+        item.sort = _next_sort(SectionItem, section_id=target.id)
+    _audit("update_item", item.entity_id or item.id)
+    db.session.commit()
+    return jsonify(_item_dict(item))
+
+
+@bp.delete("/items/<int:item_id>")
+@admin_required
+def delete_item(item_id):
+    item = _get_or_404(SectionItem, item_id)
+    _audit("delete_item", item.entity_id or item.id)
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@bp.post("/sections/<int:section_id>/items/reorder")
+@admin_required
+def reorder_items(section_id):
+    order = (request.get_json(silent=True) or {}).get("order") or []
+    for index, iid in enumerate(order):
+        SectionItem.query.filter_by(id=iid, section_id=section_id).update({"sort": index})
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+# ------------------------------------------------------------------ overrides
+@bp.put("/overrides/<path:entity_id>")
+@admin_required
+def upsert_override(entity_id):
+    data = request.get_json(silent=True) or {}
+    ov = db.session.get(EntityOverride, entity_id)
+    if not ov:
+        ov = EntityOverride(entity_id=entity_id)
+        db.session.add(ov)
+    if "friendly_name" in data:
+        ov.friendly_name = data["friendly_name"] or None
+    if "icon" in data:
+        ov.icon = data["icon"] or None
+    if "hidden" in data:
+        ov.hidden = bool(data["hidden"])
+    _audit("override", entity_id)
+    db.session.commit()
+    return jsonify(_override_dict(ov))
+
+
+@bp.delete("/overrides/<path:entity_id>")
+@admin_required
+def delete_override(entity_id):
+    ov = db.session.get(EntityOverride, entity_id)
+    if ov:
+        db.session.delete(ov)
+        db.session.commit()
+    return jsonify({"ok": True})
+
+
+@bp.get("/audit")
+@admin_required
+def get_audit():
+    rows = AuditLog.query.order_by(AuditLog.id.desc()).limit(50).all()
+    return jsonify(
+        [
+            {
+                "id": r.id,
+                "user_id": r.user_id,
+                "action": r.action,
+                "target": r.target,
+                "at": r.created_at.isoformat() if r.created_at else None,
+            }
+            for r in rows
+        ]
+    )
