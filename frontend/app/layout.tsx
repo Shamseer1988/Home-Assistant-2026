@@ -5,6 +5,9 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: "SIDRA — Smart Home",
   description: "A modern Home Assistant dashboard.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "SIDRA", statusBarStyle: "black-translucent" },
+  icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {

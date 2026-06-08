@@ -60,3 +60,23 @@ def get_config():
         return jsonify(current_app.ha_client.get_config())
     except Exception as e:  # noqa: BLE001
         return jsonify({"error": str(e)}), 502
+
+
+@bp.get("/history/<path:entity_id>")
+def history(entity_id):
+    """Numeric history for sensor sparklines: returns [{t, v}, ...]."""
+    hours = request.args.get("hours", default=24, type=int)
+    try:
+        raw = current_app.ha_client.get_history(entity_id, hours=hours)
+    except Exception as e:  # noqa: BLE001
+        return jsonify({"error": str(e)}), 502
+
+    series = raw[0] if raw else []
+    points = []
+    for entry in series:
+        try:
+            value = float(entry.get("state"))
+        except (TypeError, ValueError):
+            continue
+        points.append({"t": entry.get("last_changed") or entry.get("last_updated"), "v": value})
+    return jsonify({"entity_id": entity_id, "points": points})

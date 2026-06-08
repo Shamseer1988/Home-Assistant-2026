@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { Header } from "./Header";
+import { EntityDetailSheet } from "@/components/detail/EntityDetailSheet";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -14,6 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </main>
       <BottomNav />
+      <EntityDetailSheet />
     </div>
   );
 }

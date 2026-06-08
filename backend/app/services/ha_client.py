@@ -1,8 +1,10 @@
 """Thin Home Assistant REST client.
 
 Used for the initial state snapshot, service calls (turning things on/off),
-and config lookups. Live updates come from the WebSocket bridge instead.
+config lookups, and sensor history. Live updates come from the WebSocket bridge.
 """
+from datetime import datetime, timedelta, timezone
+
 import requests
 
 
@@ -40,5 +42,24 @@ class HAClient:
 
     def get_config(self):
         r = self.session.get(self._url("/api/config"), timeout=self.timeout)
+        r.raise_for_status()
+        return r.json()
+
+    def get_history(self, entity_id, hours=24):
+        start = (
+            (datetime.now(timezone.utc) - timedelta(hours=hours))
+            .replace(microsecond=0)
+            .isoformat()
+            .replace("+00:00", "Z")
+        )
+        r = self.session.get(
+            self._url(f"/api/history/period/{start}"),
+            params={
+                "filter_entity_id": entity_id,
+                "minimal_response": "true",
+                "no_attributes": "true",
+            },
+            timeout=self.timeout,
+        )
         r.raise_for_status()
         return r.json()

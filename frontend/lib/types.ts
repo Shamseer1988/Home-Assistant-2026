@@ -75,3 +75,13 @@ export interface PickerEntity {
   domain: string;
   state: string;
 }
+
+export interface HistoryPoint {
+  t: string;
+  v: number;
+}
+
+export interface HistorySeries {
+  entity_id: string;
+  points: HistoryPoint[];
+}
