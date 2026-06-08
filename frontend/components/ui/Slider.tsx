@@ -30,9 +30,9 @@ export function Slider({
   return (
     <div>
       {(label || suffix !== undefined) && (
-        <div className="mb-1.5 flex justify-between text-xs text-slate-400">
+        <div className="mb-1.5 flex justify-between text-xs text-muted">
           <span>{label}</span>
-          <span className="font-medium text-white">
+          <span className="font-medium text-fg">
             {Math.round(val)}
             {suffix}
           </span>

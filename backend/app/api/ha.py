@@ -3,7 +3,7 @@
 The browser talks only to these routes — never to Home Assistant directly —
 so the HA token stays server-side.
 """
-from flask import Blueprint, Response, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request, stream_with_context
 
 from ..services.state_store import store
 
@@ -100,3 +100,41 @@ def forecast(entity_id):
         return jsonify({"entity_id": entity_id, "forecast": data})
     except Exception as e:  # noqa: BLE001
         return jsonify({"error": str(e)}), 502
+
+
+@bp.get("/camera_stream/<path:entity_id>")
+def camera_stream(entity_id):
+    """Proxy the live MJPEG stream (low-latency, frame-by-frame; no buffering)."""
+    try:
+        upstream = current_app.ha_client.open_camera_stream(entity_id)
+    except Exception as e:  # noqa: BLE001
+        return jsonify({"error": str(e)}), 502
+
+    content_type = upstream.headers.get("Content-Type", "multipart/x-mixed-replace")
+
+    def generate():
+        try:
+            for chunk in upstream.iter_content(chunk_size=4096):
+                if chunk:
+                    yield chunk
+        finally:
+            upstream.close()
+
+    return Response(
+        stream_with_context(generate()),
+        content_type=content_type,
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )
+
+
+@bp.get("/image")
+def image_proxy():
+    """Proxy an HA image (person avatar, media art). Path must be under /api/."""
+    path = request.args.get("path", "")
+    if not path.startswith("/api/"):
+        return jsonify({"error": "invalid path"}), 400
+    try:
+        content, content_type = current_app.ha_client.get_image(path)
+    except Exception as e:  # noqa: BLE001
+        return jsonify({"error": str(e)}), 502
+    return Response(content, content_type=content_type, headers={"Cache-Control": "max-age=60"})

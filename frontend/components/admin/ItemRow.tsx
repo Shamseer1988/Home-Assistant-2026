@@ -27,13 +27,13 @@ export function ItemRow({
 
   if (editing) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-1.5">
+      <div className="flex items-center gap-2 rounded-xl border border-line/10 bg-fg/[0.03] px-2.5 py-1.5">
         <input
           autoFocus
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder={item.live_name || item.entity_id || ""}
-          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-sm text-white outline-none"
+          className="flex-1 rounded-lg border border-line/10 bg-fg/5 px-2 py-1 text-sm text-fg outline-none"
         />
         <IconButton
           className="text-emerald-400"
@@ -57,10 +57,10 @@ export function ItemRow({
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-1.5">
+    <div className="flex items-center gap-1 rounded-xl border border-line/10 bg-fg/[0.03] px-2.5 py-1.5">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm text-white">{display}</p>
-        <p className="truncate text-[11px] text-slate-500">{item.entity_id}</p>
+        <p className="truncate text-sm text-fg">{display}</p>
+        <p className="truncate text-[11px] text-muted">{item.entity_id}</p>
       </div>
       <IconButton title="Move up" disabled={index === 0} onClick={() => onMove(-1)}>
         <ArrowUp className="h-4 w-4" />
@@ -79,10 +79,10 @@ export function ItemRow({
           const sid = Number(e.target.value);
           if (sid !== item.section_id) run(() => updateItem(item.id, { section_id: sid }));
         }}
-        className="max-w-[6.5rem] rounded-lg border border-white/10 bg-white/5 px-1.5 py-1 text-xs text-slate-300 outline-none"
+        className="max-w-[6.5rem] rounded-lg border border-line/10 bg-fg/5 px-1.5 py-1 text-xs text-muted outline-none"
       >
         {sections.map((s) => (
-          <option key={s.id} value={s.id} className="bg-sidra-panel">
+          <option key={s.id} value={s.id} className="bg-panel">
             {s.name}
           </option>
         ))}

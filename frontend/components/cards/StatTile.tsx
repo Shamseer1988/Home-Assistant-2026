@@ -19,17 +19,17 @@ export function StatTile({
 
   return (
     <button type="button" onClick={() => openDetail(entity.entity_id)} className="w-full text-left">
-      <Card className="flex items-center gap-3 p-4 transition hover:bg-white/[0.07]">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5">
+      <Card className="flex items-center gap-3 p-4 transition hover:bg-fg/[0.07]">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fg/5">
           <Icon className="h-5 w-5 text-sky-300" />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-xs text-slate-400">
+          <p className="truncate text-xs text-muted">
             {label || friendlyName(entity)}
           </p>
-          <p className="truncate text-base font-semibold text-white">
+          <p className="truncate text-base font-semibold text-fg">
             {entity.state}
-            {unit && <span className="ml-1 text-xs text-slate-400">{unit}</span>}
+            {unit && <span className="ml-1 text-xs text-muted">{unit}</span>}
           </p>
         </div>
       </Card>

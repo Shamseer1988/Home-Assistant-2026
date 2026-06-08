@@ -70,3 +70,35 @@ export const selectSystem = (e: EntityMap) =>
         /speedtest|adguard|\bmyip\b|uptime|download|upload/.test(nameOf(x))
     )
     .sort(byName);
+
+export const selectPersons = (e: EntityMap) =>
+  all(e).filter((x) => domainOf(x.entity_id) === "person").sort(byName);
+
+export const selectHomeMode = (e: EntityMap) =>
+  all(e).find(
+    (x) => domainOf(x.entity_id) === "input_select" && /\bmode\b/.test(nameOf(x))
+  );
+
+export const selectAlarmClock = (e: EntityMap) =>
+  all(e).find(
+    (x) => domainOf(x.entity_id) === "input_datetime" && /alarm|wake/.test(nameOf(x))
+  );
+
+export const selectMainCamera = (e: EntityMap) => selectCameras(e)[0];
+
+export const selectMedia = (e: EntityMap) => {
+  const players = all(e).filter((x) => domainOf(x.entity_id) === "media_player");
+  return (
+    players.find((p) => ["playing", "paused"].includes(p.state)) ||
+    players.find((p) => !["unavailable", "off", "idle"].includes(p.state)) ||
+    players[0]
+  );
+};
+
+export const selectClimate = (e: EntityMap) =>
+  all(e).find((x) => domainOf(x.entity_id) === "climate" && x.state !== "unavailable");
+
+export const firstByDeviceClass = (e: EntityMap, dc: string) =>
+  all(e).find(
+    (x) => domainOf(x.entity_id) === "sensor" && x.attributes?.device_class === dc
+  );

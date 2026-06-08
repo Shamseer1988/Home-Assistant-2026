@@ -25,9 +25,13 @@ Assistant server, and connects to HA over the LAN via its API.
   media transport, and 24h sensor sparklines.
 - **Installable PWA** (manifest + icons) for phones and wall tablets.
 - **Special views** in the nav: a **CCTV camera grid** (token-free snapshot proxy),
-  **Energy** (solar/grid power & today's kWh), **Weather** with a 7-day forecast,
-  **Security** (Alarmo arm/disarm + door/motion sensors), and **More** (water-tank
-  gauge, prayer times, system stats, and Grafana/Jellyfin embeds).
+  **Energy** (solar/grid power, today's kWh + bar chart), **Weather** with a 7-day
+  forecast, **Security** (Alarmo arm/disarm + door/motion sensors), and **More**
+  (water-tank gauge, prayer times, system stats, and Grafana/Jellyfin embeds).
+- **Cute v2 Home dashboard:** a welcome hero (live clock, greeting, stat chips),
+  animated graphical weather, **Home-Mode** & **room** control popups, persons
+  with location & avatars, a media card, an **alarm clock**, an energy mini, and a
+  **live MJPEG main camera**. Plus a **light / dark** theme toggle.
 - **Admin login** (JWT cookies) with a protected `/admin` area, and a one-click
   **"Sync rooms from Home Assistant"** importer that builds the layout from your
   areas (disabled/hidden/diagnostic entities skipped). The layout persists in
@@ -95,6 +99,8 @@ NEXT_PUBLIC_API_URL=http://localhost:5000 npm run dev
 | POST | `/api/ha/services/<domain>/<service>` | Call a HA service (body = service data) |
 | GET  | `/api/ha/history/<entity_id>?hours=` | Numeric history for sparklines |
 | GET  | `/api/ha/camera/<entity_id>` | Camera snapshot proxy (no token in browser) |
+| GET  | `/api/ha/camera_stream/<entity_id>` | Live MJPEG stream proxy (no buffering) |
+| GET  | `/api/ha/image?path=/api/...` | Proxy an HA image (person avatars, media art) |
 | GET  | `/api/ha/forecast/<entity_id>?type=` | Weather forecast (via `weather.get_forecasts`) |
 | GET  | `/api/ha/areas` | Area / device / entity registries (for future room grouping) |
 | GET  | `/api/ha/config` | Home Assistant config (location, version) |

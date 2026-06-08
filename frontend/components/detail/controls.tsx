@@ -39,7 +39,7 @@ function BigToggle({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-line/10 py-3 text-sm font-semibold text-fg transition hover:opacity-90"
       style={{ background: on ? accent : "rgba(255,255,255,0.05)" }}
     >
       <Power className="h-4 w-4" /> {on ? "On" : "Off"}
@@ -52,7 +52,7 @@ function RoundBtn({ children, onClick }: { children: ReactNode; onClick: () => v
     <button
       type="button"
       onClick={onClick}
-      className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10"
+      className="flex h-14 w-14 items-center justify-center rounded-full border border-line/10 bg-fg/5 text-fg transition hover:bg-fg/10"
     >
       {children}
     </button>
@@ -74,8 +74,8 @@ function Chip({
       onClick={onClick}
       className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
         active
-          ? "bg-sidra-sky text-white"
-          : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+          ? "bg-sidra-sky text-fg"
+          : "border border-line/10 bg-fg/5 text-muted hover:bg-fg/10"
       }`}
     >
       {children}
@@ -134,14 +134,14 @@ function LightControls({ entity }: { entity: HAEntity }) {
       )}
       {on && hasColor && (
         <div>
-          <p className="mb-2 text-xs text-slate-400">Color</p>
+          <p className="mb-2 text-xs text-muted">Color</p>
           <div className="flex gap-2">
             {PRESET_COLORS.map((c, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => call("light", "turn_on", { entity_id: eid, rgb_color: c })}
-                className="h-8 w-8 rounded-full border border-white/20 transition hover:scale-110"
+                className="h-8 w-8 rounded-full border border-line/20 transition hover:scale-110"
                 style={{ background: `rgb(${c[0]},${c[1]},${c[2]})` }}
               />
             ))}
@@ -236,7 +236,7 @@ function CoverControls({ entity }: { entity: HAEntity }) {
     <button
       type="button"
       onClick={() => call("cover", service, { entity_id: eid })}
-      className="flex flex-1 flex-col items-center gap-1 rounded-2xl border border-white/10 bg-white/5 py-3 text-xs text-slate-300 transition hover:bg-white/10"
+      className="flex flex-1 flex-col items-center gap-1 rounded-2xl border border-line/10 bg-fg/5 py-3 text-xs text-muted transition hover:bg-fg/10"
     >
       {icon}
       {label}
@@ -272,21 +272,21 @@ function MediaControls({ entity }: { entity: HAEntity }) {
   return (
     <div className="space-y-5">
       <div className="text-center">
-        <p className="truncate font-semibold text-white">{a.media_title || entity.state}</p>
-        {a.media_artist && <p className="truncate text-sm text-slate-400">{a.media_artist}</p>}
+        <p className="truncate font-semibold text-fg">{a.media_title || entity.state}</p>
+        {a.media_artist && <p className="truncate text-sm text-muted">{a.media_artist}</p>}
       </div>
       <div className="flex items-center justify-center gap-6">
-        <button type="button" onClick={() => call("media_player", "media_previous_track", { entity_id: eid })} className="text-slate-300 hover:text-white">
+        <button type="button" onClick={() => call("media_player", "media_previous_track", { entity_id: eid })} className="text-muted hover:text-fg">
           <SkipBack className="h-6 w-6" />
         </button>
         <button
           type="button"
           onClick={() => call("media_player", "media_play_pause", { entity_id: eid })}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-sidra-blue to-sidra-sky text-white"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-sidra-blue to-sidra-sky text-fg"
         >
           {playing ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
         </button>
-        <button type="button" onClick={() => call("media_player", "media_next_track", { entity_id: eid })} className="text-slate-300 hover:text-white">
+        <button type="button" onClick={() => call("media_player", "media_next_track", { entity_id: eid })} className="text-muted hover:text-fg">
           <SkipForward className="h-6 w-6" />
         </button>
       </div>
@@ -310,7 +310,7 @@ function LockControls({ entity }: { entity: HAEntity }) {
     <button
       type="button"
       onClick={() => call("lock", locked ? "unlock" : "lock", { entity_id: eid })}
-      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-4 font-semibold text-white transition hover:bg-white/10"
+      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-line/10 bg-fg/5 py-4 font-semibold text-fg transition hover:bg-fg/10"
     >
       {locked ? <Lock className="h-5 w-5 text-emerald-400" /> : <Unlock className="h-5 w-5 text-amber-400" />}
       {locked ? "Locked — tap to unlock" : "Unlocked — tap to lock"}
@@ -335,7 +335,7 @@ function ActivateControls({ entity }: { entity: HAEntity }) {
     <button
       type="button"
       onClick={() => call(domain, service, { entity_id: eid })}
-      className="w-full rounded-2xl bg-gradient-to-br from-sidra-blue to-sidra-sky py-3 text-sm font-semibold text-white transition hover:opacity-90"
+      className="w-full rounded-2xl bg-gradient-to-br from-sidra-blue to-sidra-sky py-3 text-sm font-semibold text-fg transition hover:opacity-90"
     >
       {label}
     </button>
@@ -361,16 +361,16 @@ function SensorDetails({ entity }: { entity: HAEntity }) {
   return (
     <div className="space-y-4">
       <div className="text-center">
-        <p className="text-4xl font-bold text-white">
+        <p className="text-4xl font-bold text-fg">
           {entity.state}
-          {unit && <span className="ml-1 text-lg text-slate-400">{unit}</span>}
+          {unit && <span className="ml-1 text-lg text-muted">{unit}</span>}
         </p>
       </div>
       {numeric && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="mb-2 text-xs text-slate-400">Last 24 hours</p>
+        <div className="rounded-2xl border border-line/10 bg-fg/[0.03] p-4">
+          <p className="mb-2 text-xs text-muted">Last 24 hours</p>
           {isLoading ? (
-            <Loader2 className="mx-auto h-4 w-4 animate-spin text-slate-500" />
+            <Loader2 className="mx-auto h-4 w-4 animate-spin text-muted" />
           ) : (
             <Sparkline points={data?.points || []} />
           )}
@@ -380,8 +380,8 @@ function SensorDetails({ entity }: { entity: HAEntity }) {
         <div className="space-y-1.5">
           {attrs.map(([k, v]) => (
             <div key={k} className="flex justify-between text-sm">
-              <span className="capitalize text-slate-400">{k.replace(/_/g, " ")}</span>
-              <span className="text-white">{String(v)}</span>
+              <span className="capitalize text-muted">{k.replace(/_/g, " ")}</span>
+              <span className="text-fg">{String(v)}</span>
             </div>
           ))}
         </div>

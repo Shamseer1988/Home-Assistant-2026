@@ -37,12 +37,12 @@ function StatCard({
 }) {
   return (
     <Card className="flex items-center gap-3 p-4">
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5">
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fg/5">
         <Icon className="h-5 w-5 text-sidra-sky" />
       </span>
       <div>
-        <p className="text-lg font-bold text-white">{value}</p>
-        <p className="text-xs text-slate-400">{label}</p>
+        <p className="text-lg font-bold text-fg">{value}</p>
+        <p className="text-xs text-muted">{label}</p>
       </div>
     </Card>
   );
@@ -75,14 +75,14 @@ export default function AdminPage() {
     <div className="space-y-8">
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-slate-400">Admin</p>
-          <h1 className="text-2xl font-bold text-white">
+          <p className="text-sm text-muted">Admin</p>
+          <h1 className="text-2xl font-bold text-fg">
             Welcome, {user?.username}
           </h1>
         </div>
         <button
           onClick={onLogout}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-300 transition hover:bg-white/[0.08]"
+          className="flex items-center gap-2 rounded-xl border border-line/10 bg-fg/[0.04] px-3 py-2 text-sm text-muted transition hover:bg-fg/[0.08]"
         >
           <LogOut className="h-4 w-4" />
           Sign out
@@ -99,11 +99,11 @@ export default function AdminPage() {
       <Card className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-4">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sidra-blue to-sidra-sky">
-            <DownloadCloud className="h-5 w-5 text-white" />
+            <DownloadCloud className="h-5 w-5 text-fg" />
           </span>
           <div>
-            <h2 className="font-semibold text-white">Sync rooms from Home Assistant</h2>
-            <p className="mt-1 max-w-prose text-sm text-slate-400">
+            <h2 className="font-semibold text-fg">Sync rooms from Home Assistant</h2>
+            <p className="mt-1 max-w-prose text-sm text-muted">
               Rebuilds the dashboard from your HA areas — one room per area, with
               its lights, switches, fans, climate and sensors. Disabled, hidden,
               and diagnostic entities are skipped.
@@ -113,7 +113,7 @@ export default function AdminPage() {
         <button
           onClick={() => importMutation.mutate()}
           disabled={importMutation.isPending || !data?.ha_connected}
-          className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-sidra-blue to-sidra-sky px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-sidra-blue to-sidra-sky px-4 py-2.5 text-sm font-semibold text-fg transition hover:opacity-90 disabled:opacity-50"
         >
           {importMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           {data?.ha_connected ? "Sync now" : "HA offline"}
@@ -133,18 +133,18 @@ export default function AdminPage() {
       )}
 
       <Link href="/admin/builder" className="block">
-        <Card className="flex items-center gap-4 p-6 transition hover:bg-white/[0.07]">
+        <Card className="flex items-center gap-4 p-6 transition hover:bg-fg/[0.07]">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sidra-blue to-sidra-sky">
-            <LayoutDashboard className="h-5 w-5 text-white" />
+            <LayoutDashboard className="h-5 w-5 text-fg" />
           </span>
           <div className="flex-1">
-            <h2 className="font-semibold text-white">Dashboard builder</h2>
-            <p className="mt-1 max-w-prose text-sm text-slate-400">
+            <h2 className="font-semibold text-fg">Dashboard builder</h2>
+            <p className="mt-1 max-w-prose text-sm text-muted">
               Add and reorder rooms, drop entities into rooms, rename and move
               tiles — all from here, no YAML.
             </p>
           </div>
-          <ArrowRight className="h-5 w-5 shrink-0 text-slate-400" />
+          <ArrowRight className="h-5 w-5 shrink-0 text-muted" />
         </Card>
       </Link>
     </div>

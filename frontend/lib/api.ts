@@ -50,6 +50,14 @@ export const fetchHistory = (entityId: string, hours = 24) =>
 export const cameraUrl = (entityId: string) =>
   `${API_URL}/api/ha/camera/${entityId}`;
 
+export const cameraStreamUrl = (entityId: string) =>
+  `${API_URL}/api/ha/camera_stream/${entityId}`;
+
+export const imageUrl = (path?: string | null) =>
+  path && path.startsWith("/api/")
+    ? `${API_URL}/api/ha/image?path=${encodeURIComponent(path)}`
+    : path || "";
+
 export const fetchForecast = (entityId: string, type = "daily") =>
   apiGet<{ entity_id: string; forecast: ForecastItem[] }>(
     `/api/ha/forecast/${entityId}?type=${type}`

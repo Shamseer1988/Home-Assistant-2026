@@ -11,8 +11,8 @@ import { Empty, PageHeader } from "@/components/special/common";
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-lg font-bold text-white">{value}</p>
-      <p className="text-xs text-slate-400">{label}</p>
+      <p className="text-lg font-bold text-fg">{value}</p>
+      <p className="text-xs text-muted">{label}</p>
     </div>
   );
 }
@@ -47,10 +47,10 @@ export default function WeatherPage() {
         <div className="flex items-center gap-4">
           <Icon className="h-16 w-16 text-sidra-sky" />
           <div>
-            <p className="text-5xl font-bold text-white">
+            <p className="text-5xl font-bold text-fg">
               {a.temperature != null ? Math.round(a.temperature) : "--"}°
             </p>
-            <p className="capitalize text-slate-400">
+            <p className="capitalize text-muted">
               {(weather.state || "").replace(/_/g, " ")}
             </p>
           </div>
@@ -74,15 +74,15 @@ export default function WeatherPage() {
             const FIcon = weatherIcon(f.condition);
             return (
               <Card key={i} className="flex flex-col items-center gap-1 p-4">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted">
                   {new Date(f.datetime).toLocaleDateString([], { weekday: "short" })}
                 </p>
                 <FIcon className="my-1 h-7 w-7 text-sidra-sky" />
-                <p className="text-sm font-semibold text-white">
+                <p className="text-sm font-semibold text-fg">
                   {f.temperature != null ? Math.round(f.temperature) : "--"}°
                 </p>
                 {f.templow != null && (
-                  <p className="text-xs text-slate-500">{Math.round(f.templow)}°</p>
+                  <p className="text-xs text-muted">{Math.round(f.templow)}°</p>
                 )}
               </Card>
             );

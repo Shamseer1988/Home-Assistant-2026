@@ -12,9 +12,9 @@ export function Section({
   return (
     <section>
       <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <h2 className="text-lg font-semibold text-fg">{title}</h2>
         {count != null && (
-          <span className="text-xs font-medium text-slate-400">{count}</span>
+          <span className="text-xs font-medium text-muted">{count}</span>
         )}
       </div>
       {children}

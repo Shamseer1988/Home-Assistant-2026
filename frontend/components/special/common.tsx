@@ -9,14 +9,14 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-6">
-      <h1 className="text-2xl font-bold text-white">{title}</h1>
-      {subtitle && <p className="text-sm text-slate-400">{subtitle}</p>}
+      <h1 className="text-2xl font-bold text-fg">{title}</h1>
+      {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
     </div>
   );
 }
 
 export function Empty({ msg }: { msg: string }) {
   return (
-    <Card className="p-10 text-center text-sm text-slate-400">{msg}</Card>
+    <Card className="p-10 text-center text-sm text-muted">{msg}</Card>
   );
 }

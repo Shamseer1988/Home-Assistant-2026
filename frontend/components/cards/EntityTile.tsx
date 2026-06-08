@@ -21,10 +21,10 @@ export function EntityTile({
   if (!entity) {
     return (
       <Card className="flex flex-col justify-between gap-2 p-4 opacity-50">
-        <p className="truncate text-sm font-medium text-white">
+        <p className="truncate text-sm font-medium text-fg">
           {label || entityId}
         </p>
-        <p className="text-xs text-slate-500">Unavailable</p>
+        <p className="text-xs text-muted">Unavailable</p>
       </Card>
     );
   }

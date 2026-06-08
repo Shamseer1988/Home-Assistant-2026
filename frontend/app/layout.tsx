@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         {/* Providers (React Query + realtime) wrap everything; the dashboard
             shell lives in the (app) route group so /login can render bare. */}

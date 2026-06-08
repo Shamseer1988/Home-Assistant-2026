@@ -26,7 +26,7 @@ export function PrayerTimes({ sensors }: { sensors: HAEntity[] }) {
 
   return (
     <Card className="p-5">
-      <h3 className="mb-3 font-semibold text-white">Prayer Times</h3>
+      <h3 className="mb-3 font-semibold text-fg">Prayer Times</h3>
       <div className="space-y-1.5">
         {sensors.map((s) => {
           const isNext = next && s.entity_id === next.entity_id;
@@ -34,7 +34,7 @@ export function PrayerTimes({ sensors }: { sensors: HAEntity[] }) {
             <div
               key={s.entity_id}
               className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
-                isNext ? "bg-sidra-sky/15 text-white" : "text-slate-300"
+                isNext ? "bg-sidra-sky/15 text-fg" : "text-muted"
               }`}
             >
               <span className="capitalize">{label(s)}</span>
@@ -43,7 +43,7 @@ export function PrayerTimes({ sensors }: { sensors: HAEntity[] }) {
           );
         })}
         {sensors.length === 0 && (
-          <p className="text-sm text-slate-400">No prayer-time sensors found.</p>
+          <p className="text-sm text-muted">No prayer-time sensors found.</p>
         )}
       </div>
     </Card>

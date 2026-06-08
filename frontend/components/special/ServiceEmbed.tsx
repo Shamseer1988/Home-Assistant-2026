@@ -9,9 +9,9 @@ export function ServiceEmbed({ service }: { service: ServiceLink }) {
     <Card className="overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3">
         <div>
-          <p className="font-medium text-white">{service.name}</p>
+          <p className="font-medium text-fg">{service.name}</p>
           {service.description && (
-            <p className="text-xs text-slate-400">{service.description}</p>
+            <p className="text-xs text-muted">{service.description}</p>
           )}
         </div>
         <a
@@ -24,7 +24,7 @@ export function ServiceEmbed({ service }: { service: ServiceLink }) {
         </a>
       </div>
       {/* Some services block embedding (X-Frame-Options); the link above is the fallback. */}
-      <iframe src={service.url} title={service.name} className="h-80 w-full border-0 bg-white/5" />
+      <iframe src={service.url} title={service.name} className="h-80 w-full border-0 bg-fg/5" />
     </Card>
   );
 }

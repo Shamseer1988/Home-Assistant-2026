@@ -12,7 +12,7 @@ export function Sparkline({
   height?: number;
 }) {
   if (points.length < 2) {
-    return <p className="text-xs text-slate-500">Not enough history yet.</p>;
+    return <p className="text-xs text-muted">Not enough history yet.</p>;
   }
 
   const width = 300;

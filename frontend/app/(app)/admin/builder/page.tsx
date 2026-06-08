@@ -57,13 +57,13 @@ export default function BuilderPage() {
       <header className="flex items-center gap-3">
         <Link
           href="/admin"
-          className="rounded-xl border border-white/10 bg-white/[0.04] p-2 text-slate-300 transition hover:bg-white/[0.08]"
+          className="rounded-xl border border-line/10 bg-fg/[0.04] p-2 text-muted transition hover:bg-fg/[0.08]"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <p className="text-sm text-slate-400">Admin</p>
-          <h1 className="text-2xl font-bold text-white">Dashboard Builder</h1>
+          <p className="text-sm text-muted">Admin</p>
+          <h1 className="text-2xl font-bold text-fg">Dashboard Builder</h1>
         </div>
       </header>
 
@@ -73,13 +73,13 @@ export default function BuilderPage() {
           onChange={(e) => setNewRoom(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addRoom()}
           placeholder="New room name…"
-          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none"
+          className="flex-1 rounded-xl border border-line/10 bg-fg/5 px-3 py-2 text-sm text-fg outline-none"
         />
         <button
           type="button"
           onClick={addRoom}
           disabled={!newRoom.trim() || adding}
-          className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-sidra-blue to-sidra-sky px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-sidra-blue to-sidra-sky px-3 py-2 text-sm font-semibold text-fg transition hover:opacity-90 disabled:opacity-50"
         >
           {adding ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -101,7 +101,7 @@ export default function BuilderPage() {
           <Loader2 className="mx-auto h-6 w-6 animate-spin text-sidra-sky" />
         </div>
       ) : sections.length === 0 ? (
-        <Card className="p-10 text-center text-slate-400">
+        <Card className="p-10 text-center text-muted">
           No rooms yet. Add one above, or run “Sync rooms from Home Assistant”
           on the admin home.
         </Card>

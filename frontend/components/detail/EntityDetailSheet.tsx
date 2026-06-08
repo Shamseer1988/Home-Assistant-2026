@@ -26,7 +26,7 @@ export function EntityDetailSheet() {
           onClick={close}
         >
           <motion.div
-            className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-white/10 bg-sidra-panel p-5 shadow-glass sm:rounded-3xl"
+            className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-line/10 bg-panel p-5 shadow-glass sm:rounded-3xl"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -35,20 +35,20 @@ export function EntityDetailSheet() {
           >
             <div className="mb-5 flex items-center gap-3">
               {Icon && (
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-fg/5">
                   <Icon className="h-5 w-5 text-sidra-sky" />
                 </span>
               )}
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-white">
+                <p className="truncate font-semibold text-fg">
                   {entity ? friendlyName(entity) : entityId}
                 </p>
-                <p className="truncate text-xs text-slate-500">{entityId}</p>
+                <p className="truncate text-xs text-muted">{entityId}</p>
               </div>
               <button
                 type="button"
                 onClick={close}
-                className="rounded-lg p-1 text-slate-400 transition hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-1 text-muted transition hover:bg-fg/10 hover:text-fg"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -57,7 +57,7 @@ export function EntityDetailSheet() {
             {entity ? (
               <DomainControls entity={entity} />
             ) : (
-              <p className="py-6 text-center text-sm text-slate-400">Entity unavailable</p>
+              <p className="py-6 text-center text-sm text-muted">Entity unavailable</p>
             )}
           </motion.div>
         </motion.div>

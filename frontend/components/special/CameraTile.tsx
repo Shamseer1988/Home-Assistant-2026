@@ -25,7 +25,7 @@ export function CameraTile({ entity }: { entity: HAEntity }) {
     <Card className="overflow-hidden">
       <div className="relative aspect-video bg-black/40">
         {unavailable || error ? (
-          <div className="flex h-full items-center justify-center text-slate-500">
+          <div className="flex h-full items-center justify-center text-muted">
             <VideoOff className="h-8 w-8" />
           </div>
         ) : (
@@ -39,10 +39,10 @@ export function CameraTile({ entity }: { entity: HAEntity }) {
         )}
       </div>
       <div className="flex items-center justify-between px-4 py-3">
-        <p className="truncate text-sm font-medium text-white">
+        <p className="truncate text-sm font-medium text-fg">
           {friendlyName(entity)}
         </p>
-        <span className="text-xs capitalize text-slate-400">{entity.state}</span>
+        <span className="text-xs capitalize text-muted">{entity.state}</span>
       </div>
     </Card>
   );

@@ -23,11 +23,11 @@ export function RoomSection({ section }: { section: DashSection }) {
   return (
     <section>
       <div className="mb-3 flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-fg/5">
           <Icon className="h-4 w-4 text-sidra-sky" />
         </span>
-        <h2 className="text-lg font-semibold text-white">{section.name}</h2>
-        <span className="text-xs text-slate-400">
+        <h2 className="text-lg font-semibold text-fg">{section.name}</h2>
+        <span className="text-xs text-muted">
           {onCount > 0 && `${onCount} on · `}
           {section.items.length}
         </span>

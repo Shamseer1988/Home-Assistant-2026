@@ -69,6 +69,21 @@ class HAClient:
         r.raise_for_status()
         return r.content, r.headers.get("Content-Type", "image/jpeg")
 
+    def open_camera_stream(self, entity_id):
+        """Open the live MJPEG stream (caller must close the response)."""
+        r = self.session.get(
+            self._url(f"/api/camera_proxy_stream/{entity_id}"),
+            stream=True,
+            timeout=(10, None),
+        )
+        r.raise_for_status()
+        return r
+
+    def get_image(self, path):
+        r = self.session.get(self._url(path), timeout=self.timeout)
+        r.raise_for_status()
+        return r.content, r.headers.get("Content-Type", "image/jpeg")
+
     def get_forecast(self, entity_id, forecast_type="daily"):
         r = self.session.post(
             self._url("/api/services/weather/get_forecasts"),

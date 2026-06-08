@@ -9,7 +9,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-sidra-bg/80 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-line/10 bg-panel/80 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl md:hidden">
       <ul className="mx-auto flex max-w-md items-center justify-between">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
@@ -20,7 +20,7 @@ export function BottomNav() {
                 href={item.href}
                 className={cn(
                   "flex flex-col items-center gap-1 px-1 text-[10px] transition-colors",
-                  active ? "text-sidra-sky" : "text-slate-400"
+                  active ? "text-sidra-sky" : "text-muted"
                 )}
               >
                 <Icon className="h-5 w-5" />

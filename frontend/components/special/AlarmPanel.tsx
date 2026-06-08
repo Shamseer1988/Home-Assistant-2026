@@ -29,7 +29,7 @@ export function AlarmPanel({ entity }: { entity: HAEntity }) {
   const [code, setCode] = useState("");
   const style = STATE_STYLE[entity.state] || {
     label: entity.state,
-    color: "text-slate-300",
+    color: "text-muted",
     Icon: ShieldCheck,
   };
   const Icon = style.Icon;
@@ -53,7 +53,7 @@ export function AlarmPanel({ entity }: { entity: HAEntity }) {
     <button
       type="button"
       onClick={() => act(service)}
-      className="rounded-xl border border-white/10 bg-white/5 py-3 text-sm text-white transition hover:bg-white/10"
+      className="rounded-xl border border-line/10 bg-fg/5 py-3 text-sm text-fg transition hover:bg-fg/10"
     >
       <BtnIcon className="mx-auto mb-1 h-5 w-5" />
       {label}
@@ -65,7 +65,7 @@ export function AlarmPanel({ entity }: { entity: HAEntity }) {
       <div className="mb-5 flex flex-col items-center gap-2">
         <Icon className={`h-12 w-12 ${style.color}`} />
         <p className={`text-lg font-semibold ${style.color}`}>{style.label}</p>
-        <p className="text-xs text-slate-500">{friendlyName(entity)}</p>
+        <p className="text-xs text-muted">{friendlyName(entity)}</p>
       </div>
       {codeRequired && (
         <input
@@ -74,7 +74,7 @@ export function AlarmPanel({ entity }: { entity: HAEntity }) {
           inputMode="numeric"
           type="password"
           placeholder="Code"
-          className="mb-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-white outline-none"
+          className="mb-3 w-full rounded-xl border border-line/10 bg-fg/5 px-3 py-2 text-center text-fg outline-none"
         />
       )}
       <div className="grid grid-cols-3 gap-2">

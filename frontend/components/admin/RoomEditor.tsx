@@ -58,7 +58,7 @@ export function RoomEditor({
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-fg/5">
           <Icon className="h-4 w-4 text-sidra-sky" />
         </span>
 
@@ -68,7 +68,7 @@ export function RoomEditor({
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="flex-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-white outline-none"
+              className="flex-1 rounded-lg border border-line/10 bg-fg/5 px-2 py-1 text-fg outline-none"
             />
             <IconButton
               className="text-emerald-400"
@@ -90,10 +90,10 @@ export function RoomEditor({
           </div>
         ) : (
           <>
-            <h3 className="flex-1 truncate font-semibold text-white">
+            <h3 className="flex-1 truncate font-semibold text-fg">
               {section.name}
             </h3>
-            <span className="mr-1 text-xs text-slate-400">
+            <span className="mr-1 text-xs text-muted">
               {section.items.length}
             </span>
             <IconButton title="Move up" disabled={index === 0} onClick={() => onMoveRoom(-1)}>
@@ -140,14 +140,14 @@ export function RoomEditor({
           />
         ))}
         {section.items.length === 0 && (
-          <p className="px-1 py-2 text-sm text-slate-500">No tiles yet.</p>
+          <p className="px-1 py-2 text-sm text-muted">No tiles yet.</p>
         )}
       </div>
 
       <button
         type="button"
         onClick={() => setPicker(true)}
-        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 py-2 text-sm text-slate-300 transition hover:bg-white/[0.04]"
+        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-line/15 py-2 text-sm text-muted transition hover:bg-fg/[0.04]"
       >
         <Plus className="h-4 w-4" /> Add entities
       </button>

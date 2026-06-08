@@ -67,7 +67,7 @@ export function DeviceTile({
       }}
       className={cn(
         "group relative flex cursor-pointer flex-col items-start gap-3 rounded-3xl border p-4 text-left transition-all",
-        on ? accent.bg : "border-white/10 bg-white/[0.04] hover:bg-white/[0.07]",
+        on ? accent.bg : "border-line/10 bg-fg/[0.04] hover:bg-fg/[0.07]",
         unavailable && "cursor-not-allowed opacity-40",
         pending && "animate-pulse"
       )}
@@ -76,10 +76,10 @@ export function DeviceTile({
         <span
           className={cn(
             "flex h-11 w-11 items-center justify-center rounded-2xl",
-            on ? "bg-white/15" : "bg-white/5"
+            on ? "bg-fg/10" : "bg-fg/5"
           )}
         >
-          <Icon className={cn("h-5 w-5", on ? accent.icon : "text-slate-300")} />
+          <Icon className={cn("h-5 w-5", on ? accent.icon : "text-muted")} />
         </span>
         <div className="flex items-center gap-1.5">
           <button
@@ -89,7 +89,7 @@ export function DeviceTile({
               e.stopPropagation();
               openDetail(entity.entity_id);
             }}
-            className="rounded-lg p-1 text-slate-400 opacity-60 transition hover:bg-white/10 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
+            className="rounded-lg p-1 text-muted opacity-60 transition hover:bg-fg/10 hover:text-fg sm:opacity-0 sm:group-hover:opacity-100"
           >
             <Maximize2 className="h-3.5 w-3.5" />
           </button>
@@ -106,10 +106,10 @@ export function DeviceTile({
         </div>
       </div>
       <div className="w-full">
-        <p className="truncate text-sm font-medium text-white">
+        <p className="truncate text-sm font-medium text-fg">
           {label || friendlyName(entity)}
         </p>
-        <p className="text-xs text-slate-400">{stateLabel(entity)}</p>
+        <p className="text-xs text-muted">{stateLabel(entity)}</p>
       </div>
     </motion.div>
   );

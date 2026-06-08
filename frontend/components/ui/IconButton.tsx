@@ -10,7 +10,7 @@ export function IconButton({
       type="button"
       {...props}
       className={cn(
-        "rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent",
+        "rounded-lg p-1.5 text-muted transition hover:bg-fg/10 hover:text-fg disabled:opacity-30 disabled:hover:bg-transparent",
         className
       )}
     />
