@@ -12,15 +12,18 @@ Assistant server, and connects to HA over the LAN via its API.
 
 ---
 
-## What works now (Phase 0 + 1)
+## What works now (Phases 0–3)
 
-- Flask backend that connects to Home Assistant over REST **and** WebSocket.
-- In-memory snapshot of all entity states + **live `state_changed` streaming**
-  to the browser via Socket.IO.
-- Next.js dashboard (mobile / tablet / laptop) showing live device tiles grouped
-  by type, with a connection indicator and "lights on" stats.
-- **End-to-end control:** toggle a real light/switch/fan from the UI and watch
-  every connected client update in real time.
+- Flask backend that connects to Home Assistant over REST **and** WebSocket,
+  with an in-memory snapshot + **live `state_changed` streaming** via Socket.IO.
+- Next.js dashboard (mobile / tablet / laptop) with **rooms** — entities grouped
+  by Home Assistant area — plus a connection indicator and live stats.
+- **End-to-end control:** toggle a real light/switch/fan and watch every client
+  update in real time.
+- **Admin login** (JWT cookies) with a protected `/admin` area, and a one-click
+  **"Sync rooms from Home Assistant"** importer that builds the layout from your
+  areas (disabled/hidden/diagnostic entities skipped). The layout persists in
+  SQLite; before any import the dashboard falls back to grouping by type.
 
 ---
 
@@ -86,7 +89,9 @@ NEXT_PUBLIC_API_URL=http://localhost:5000 npm run dev
 | POST | `/api/auth/logout` | Clear auth cookies |
 | POST | `/api/auth/refresh` | Rotate the access token (refresh cookie) |
 | GET  | `/api/auth/me` | Current user (401 if not signed in) |
+| GET  | `/api/dashboard` | Default dashboard tree (rooms + tiles), overrides applied |
 | GET  | `/api/admin/overview` | Admin-only stats (JWT + admin role) |
+| POST | `/api/admin/import` | Admin-only: (re)build rooms from HA areas |
 
 ## Admin login (Phase 2)
 

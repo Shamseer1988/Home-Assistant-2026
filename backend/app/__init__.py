@@ -86,6 +86,7 @@ def create_app(config_object=Config):
     # --- Blueprints ---
     from .api.admin import bp as admin_bp
     from .api.auth import bp as auth_bp
+    from .api.dashboard import bp as dashboard_bp
     from .api.ha import bp as ha_bp
     from .api.health import bp as health_bp
 
@@ -93,14 +94,41 @@ def create_app(config_object=Config):
     app.register_blueprint(ha_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(dashboard_bp)
 
     # --- Socket.IO handlers (import registers the decorators) ---
     from .sockets import events  # noqa: F401
 
-    # --- Start the live bridge in the background ---
+    # --- Start the live bridge + first-boot room import in the background ---
     if app.config["HA_TOKEN"]:
         socketio.start_background_task(app.ha_bridge.run_forever)
+        socketio.start_background_task(_auto_import, app)
     else:
         app.logger.warning("HA_TOKEN not set — live bridge disabled. Configure it in .env")
 
     return app
+
+
+def _auto_import(app):
+    """Once the HA bridge is connected, seed the default dashboard from areas
+    if one doesn't exist yet. Runs in the background so startup never blocks."""
+    from .models.dashboard import Dashboard
+    from .services.importer import run_import
+
+    bridge = app.ha_bridge
+    for _ in range(30):
+        if bridge.is_connected():
+            break
+        socketio.sleep(1)
+    if not bridge.is_connected():
+        app.logger.warning("Auto-import skipped: HA bridge not connected")
+        return
+
+    with app.app_context():
+        if Dashboard.query.count() > 0:
+            return
+        try:
+            result = run_import(app)
+            app.logger.info("Auto-imported dashboard from HA areas: %s", result)
+        except Exception as e:  # noqa: BLE001
+            app.logger.warning("Auto-import failed: %s", e)

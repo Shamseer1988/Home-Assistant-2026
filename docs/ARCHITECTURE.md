@@ -111,16 +111,18 @@ frontend/
 
 ```
 users(id, username, email, password_hash, role, created_at)
-dashboards(id, name, is_default, sort)
-sections(id, dashboard_id, name, icon, type, sort)        # "add section"
-cards(id, section_id, type, title, icon, sort, config_json)
-card_entities(id, card_id, entity_id, label, icon, sort)  # "add entity to room"
-entity_overrides(entity_id, friendly_name, icon, room, hidden)  # "update entities"
-settings(key, value)
-audit_log(id, user_id, action, target, ts)
+dashboards(id, name, slug, is_default, sort)
+sections(id, dashboard_id, name, icon, sort)              # "add section / room"
+section_items(id, section_id, type, entity_id, label, icon, sort, config_json)
+                                                          # "add entity to room"
+entity_overrides(entity_id, friendly_name, icon, hidden)  # "update entities"
+# Phase 4+: settings(key, value), audit_log(id, user_id, action, target, ts)
 ```
 
-Only the **layout** lives in the DB. Live values always come from HA.
+The architecture's original `cards` + `card_entities` layers were consolidated
+into a single `section_items` table: each item is an entity tile today, and
+`type` + `config_json` keep the door open for rich cards (weather, gauge, chart,
+media) in Phase 5. Only the **layout** lives in the DB; live values come from HA.
 
 ---
 
@@ -131,7 +133,7 @@ Only the **layout** lives in the DB. Live values always come from HA.
 | 0 | Monorepo, Docker, Flask boot, Next.js shell, live entity count | **done** |
 | 1 | HA REST+WS bridge, live tiles, end-to-end toggle | **done** |
 | 2 | Auth & admin foundation (JWT cookies, seeded admin, route guards) | **done** |
-| 3 | Dynamic dashboard from DB + importer that seeds rooms/entities from HA areas | planned |
+| 3 | Dynamic dashboard from DB + importer that seeds rooms/entities from HA areas | **done** |
 | 4 | Admin CRUD: add/edit sections, cards, entities-to-room, overrides, audit | planned |
 | 5 | Rich card library, charts, animations, responsive polish, PWA | planned |
 | 6 | Special views: cameras, solar/energy, water, prayer times, alarm, iframes | planned |

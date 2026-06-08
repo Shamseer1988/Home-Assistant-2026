@@ -14,8 +14,10 @@ import { apiGet } from "@/lib/api";
 import { domainOf, friendlyName } from "@/lib/ha";
 import type { HAEntity } from "@/lib/types";
 import { useEntityStore } from "@/store/entities";
+import { useDashboard } from "@/lib/useDashboard";
 import { DeviceTile } from "@/components/cards/DeviceTile";
 import { StatTile } from "@/components/cards/StatTile";
+import { RoomSection } from "@/components/cards/RoomSection";
 import { Section } from "@/components/cards/Section";
 import { Card } from "@/components/ui/Card";
 
@@ -49,23 +51,8 @@ function Stat({
   );
 }
 
-export default function DashboardPage() {
-  const entities = useEntityStore((s) => s.entities);
-  const setSnapshot = useEntityStore((s) => s.setSnapshot);
-
-  // Seed from REST in case the Socket.IO snapshot hasn't arrived yet.
-  const { data, isError } = useQuery({
-    queryKey: ["states"],
-    queryFn: () => apiGet<HAEntity[]>("/api/ha/states"),
-  });
-
-  useEffect(() => {
-    if (data && Object.keys(useEntityStore.getState().entities).length === 0) {
-      setSnapshot(data);
-    }
-  }, [data, setSnapshot]);
-
-  const list = Object.values(entities);
+/** Fallback view (group by domain) used until rooms are imported. */
+function DomainFallback({ list }: { list: HAEntity[] }) {
   const byDomain = (d: string) =>
     list
       .filter((e) => domainOf(e.entity_id) === d)
@@ -82,28 +69,80 @@ export default function DashboardPage() {
         e.state !== "unavailable"
     )
     .slice(0, 18);
-  const lightsOn = lights.filter((e) => e.state === "on").length;
 
-  if (list.length === 0) {
+  return (
+    <>
+      {lights.length > 0 && (
+        <Section title="Lights" count={lights.length}>
+          <Grid>
+            {lights.map((e) => (
+              <DeviceTile key={e.entity_id} entity={e} />
+            ))}
+          </Grid>
+        </Section>
+      )}
+      {switches.length > 0 && (
+        <Section title="Switches" count={switches.length}>
+          <Grid>
+            {switches.map((e) => (
+              <DeviceTile key={e.entity_id} entity={e} />
+            ))}
+          </Grid>
+        </Section>
+      )}
+      {fans.length > 0 && (
+        <Section title="Fans" count={fans.length}>
+          <Grid>
+            {fans.map((e) => (
+              <DeviceTile key={e.entity_id} entity={e} />
+            ))}
+          </Grid>
+        </Section>
+      )}
+      {sensors.length > 0 && (
+        <Section title="Sensors" count={sensors.length}>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {sensors.map((e) => (
+              <StatTile key={e.entity_id} entity={e} />
+            ))}
+          </div>
+        </Section>
+      )}
+    </>
+  );
+}
+
+export default function DashboardPage() {
+  const entities = useEntityStore((s) => s.entities);
+  const setSnapshot = useEntityStore((s) => s.setSnapshot);
+
+  // Seed the store from REST if the Socket.IO snapshot hasn't landed yet.
+  const { data: states } = useQuery({
+    queryKey: ["states"],
+    queryFn: () => apiGet<HAEntity[]>("/api/ha/states"),
+  });
+  const { data: dashboard, isLoading: dashLoading } = useDashboard();
+
+  useEffect(() => {
+    if (states && Object.keys(useEntityStore.getState().entities).length === 0) {
+      setSnapshot(states);
+    }
+  }, [states, setSnapshot]);
+
+  const list = Object.values(entities);
+  const lights = list.filter((e) => domainOf(e.entity_id) === "light");
+  const lightsOn = lights.filter((e) => e.state === "on").length;
+  const switches = list.filter((e) => domainOf(e.entity_id) === "switch");
+  const fans = list.filter((e) => domainOf(e.entity_id) === "fan");
+
+  const hasRooms =
+    !!dashboard && dashboard.sections.some((s) => s.items.length > 0);
+
+  if (list.length === 0 && dashLoading) {
     return (
       <Card className="flex flex-col items-center justify-center gap-3 p-12 text-center">
-        {isError ? (
-          <>
-            <p className="text-white">Can't reach the backend.</p>
-            <p className="max-w-sm text-sm text-slate-400">
-              Check that the Flask backend is running and that{" "}
-              <code className="text-sidra-sky">NEXT_PUBLIC_API_URL</code> points
-              to it.
-            </p>
-          </>
-        ) : (
-          <>
-            <Loader2 className="h-6 w-6 animate-spin text-sidra-sky" />
-            <p className="text-sm text-slate-400">
-              Connecting to Home Assistant…
-            </p>
-          </>
-        )}
+        <Loader2 className="h-6 w-6 animate-spin text-sidra-sky" />
+        <p className="text-sm text-slate-400">Loading your home…</p>
       </Card>
     );
   }
@@ -121,44 +160,12 @@ export default function DashboardPage() {
         <Stat label="Fans" value={fans.length} icon={FanIcon} />
       </div>
 
-      {lights.length > 0 && (
-        <Section title="Lights" count={lights.length}>
-          <Grid>
-            {lights.map((e) => (
-              <DeviceTile key={e.entity_id} entity={e} />
-            ))}
-          </Grid>
-        </Section>
-      )}
-
-      {switches.length > 0 && (
-        <Section title="Switches" count={switches.length}>
-          <Grid>
-            {switches.map((e) => (
-              <DeviceTile key={e.entity_id} entity={e} />
-            ))}
-          </Grid>
-        </Section>
-      )}
-
-      {fans.length > 0 && (
-        <Section title="Fans" count={fans.length}>
-          <Grid>
-            {fans.map((e) => (
-              <DeviceTile key={e.entity_id} entity={e} />
-            ))}
-          </Grid>
-        </Section>
-      )}
-
-      {sensors.length > 0 && (
-        <Section title="Sensors" count={sensors.length}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {sensors.map((e) => (
-              <StatTile key={e.entity_id} entity={e} />
-            ))}
-          </div>
-        </Section>
+      {hasRooms ? (
+        dashboard!.sections.map((section) => (
+          <RoomSection key={section.id} section={section} />
+        ))
+      ) : (
+        <DomainFallback list={list} />
       )}
     </div>
   );

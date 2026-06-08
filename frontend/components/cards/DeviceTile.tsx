@@ -24,7 +24,13 @@ const ACCENT: Record<string, { bg: string; icon: string }> = {
   },
 };
 
-export function DeviceTile({ entity }: { entity: HAEntity }) {
+export function DeviceTile({
+  entity,
+  label,
+}: {
+  entity: HAEntity;
+  label?: string | null;
+}) {
   const [pending, setPending] = useState(false);
   const domain = domainOf(entity.entity_id);
   const on = isOn(entity);
@@ -80,7 +86,7 @@ export function DeviceTile({ entity }: { entity: HAEntity }) {
       </div>
       <div className="w-full">
         <p className="truncate text-sm font-medium text-white">
-          {friendlyName(entity)}
+          {label || friendlyName(entity)}
         </p>
         <p className="text-xs text-slate-400">{stateLabel(entity)}</p>
       </div>
