@@ -10,6 +10,7 @@ from flask_jwt_extended import (
     unset_jwt_cookies,
 )
 
+from ..extensions import limiter
 from ..models.user import User
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
@@ -23,6 +24,7 @@ def _tokens_for(user: User):
 
 
 @bp.post("/login")
+@limiter.limit("10 per minute; 50 per hour")
 def login():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()

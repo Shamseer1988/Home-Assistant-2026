@@ -1,0 +1,25 @@
+# Reverse proxy for the production (single-origin, HTTPS) setup.
+# Set SIDRA_DOMAIN in .env.
+#
+#  • Public domain (ports 80/443 reachable + DNS):
+#       SIDRA_DOMAIN=sidra.example.com  -> Caddy gets a Let's Encrypt cert automatically.
+#  • LAN / IP only:
+#       set SIDRA_DOMAIN to a hostname or IP and uncomment "tls internal" below.
+#       Caddy issues a self-signed cert; install its root CA on your devices,
+#       then browse to https://<that-host>.
+{$SIDRA_DOMAIN:localhost} {
+	# tls internal
+
+	encode zstd gzip
+
+	# API + realtime go to the Flask backend.
+	@backend path /api/* /socket.io/*
+	handle @backend {
+		reverse_proxy backend:5000
+	}
+
+	# Everything else is the Next.js frontend.
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

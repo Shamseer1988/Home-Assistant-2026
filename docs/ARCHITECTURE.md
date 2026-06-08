@@ -137,7 +137,9 @@ media) in Phase 5. Only the **layout** lives in the DB; live values come from HA
 | 4 | Admin builder: rooms + tiles CRUD, entity picker, reorder/move, overrides, audit | **done** |
 | 5 | Rich controls (detail sheet), climate dial, sliders, media, sparklines, PWA | **done** |
 | 6 | Special views: cameras, energy, weather + forecast, security, water/prayer, embeds | **done** |
-| 7 | Hardening: reverse proxy/HTTPS, rate limiting, tests, backups, prod deploy | planned |
+| 7 | Hardening: Caddy/HTTPS single origin, rate limiting, headers, tests, backups | **done** |
+
+All seven phases are complete. See [`DEPLOY.md`](DEPLOY.md) for production setup.
 
 ---
 

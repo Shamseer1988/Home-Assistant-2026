@@ -1,0 +1,56 @@
+# ============================================================
+#  SIDRA Dashboard 2026 — production stack
+#  Single origin behind Caddy with automatic HTTPS.
+#  Only Caddy is exposed; backend/frontend are internal.
+#
+#  Usage:
+#    cp .env.example .env   # set HA_*, ADMIN_*, SECRET_KEY,
+#                           # SIDRA_DOMAIN, JWT_COOKIE_SECURE=true
+#    docker compose -f docker-compose.prod.yml up -d --build
+# ============================================================
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: sidra-caddy
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: sidra-backend
+    env_file: .env
+    environment:
+      # Behind the proxy: trust X-Forwarded-* (client IPs, https scheme).
+      - TRUST_PROXY=true
+    volumes:
+      - sidra-data:/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Empty => the browser calls same-origin /api, which Caddy proxies.
+        NEXT_PUBLIC_API_URL: ""
+    container_name: sidra-frontend
+    environment:
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  sidra-data:
+  caddy-data:
+  caddy-config:

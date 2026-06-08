@@ -2,8 +2,11 @@ import type { ForecastItem, Health, HistorySeries } from "./types";
 
 // Baked at build time (see Dockerfile build arg / .env PUBLIC_API_URL).
 // The browser uses this to reach the Flask backend + Socket.IO.
+//   - empty string  -> same-origin (behind the reverse proxy, requests go to /api)
+//   - absolute URL  -> direct to the backend (simple/dev setup)
+// `??` (not `||`) so an explicit empty string stays empty.
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
 export async function apiGet<T>(path: string): Promise<T> {
   // credentials: include so the httpOnly JWT cookie travels cross-origin.

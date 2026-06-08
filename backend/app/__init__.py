@@ -5,7 +5,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from .config import Config
-from .extensions import db, jwt, socketio
+from .extensions import db, jwt, limiter, socketio
 from .services.ha_client import HAClient
 from .services.ha_ws import HAWebSocketBridge
 from .services.state_store import store
@@ -40,6 +40,13 @@ def create_app(config_object=Config):
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
+    # Behind the reverse proxy, honour X-Forwarded-* so client IPs (rate limiting)
+    # and the request scheme (secure cookies) are correct.
+    if app.config.get("TRUST_PROXY"):
+        from werkzeug.middleware.proxy_fix import ProxyFix
+
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
     # CORS for REST + Socket.IO (browser is on a different origin than the API).
     # supports_credentials lets the httpOnly JWT cookie flow cross-origin; with
     # it, Flask-CORS reflects the request origin instead of sending "*".
@@ -50,9 +57,10 @@ def create_app(config_object=Config):
     )
     socketio.init_app(app, cors_allowed_origins=app.config["CORS_ORIGINS"])
 
-    # --- Database + auth ---
+    # --- Database + auth + rate limiting ---
     db.init_app(app)
     jwt.init_app(app)
+    limiter.init_app(app)
     with app.app_context():
         from . import models  # noqa: F401  (registers models on the metadata)
 
@@ -100,6 +108,27 @@ def create_app(config_object=Config):
 
     # --- Socket.IO handlers (import registers the decorators) ---
     from .sockets import events  # noqa: F401
+
+    # --- Security headers on every API response ---
+    @app.after_request
+    def _security_headers(resp):
+        resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resp.headers.setdefault("X-Frame-Options", "DENY")
+        resp.headers.setdefault("Referrer-Policy", "no-referrer")
+        return resp
+
+    # --- JSON error handlers ---
+    @app.errorhandler(404)
+    def _not_found(_e):
+        return {"error": "not found"}, 404
+
+    @app.errorhandler(429)
+    def _rate_limited(_e):
+        return {"error": "too many requests"}, 429
+
+    @app.errorhandler(500)
+    def _server_error(_e):
+        return {"error": "internal server error"}, 500
 
     # --- Start the live bridge + first-boot room import in the background ---
     if app.config["HA_TOKEN"]:

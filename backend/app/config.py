@@ -39,6 +39,9 @@ class Config:
     # ---- Server ----
     PORT = int(os.getenv("PORT", "5000"))
     CORS_ORIGINS = _parse_origins(os.getenv("CORS_ORIGINS", "*"))
+    # Trust X-Forwarded-* headers (enable when running behind the reverse proxy).
+    TRUST_PROXY = os.getenv("TRUST_PROXY", "false").lower() == "true"
+    RATELIMIT_ENABLED = os.getenv("RATELIMIT_ENABLED", "true").lower() == "true"
 
     # ---- Database ----
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///sidra.db")

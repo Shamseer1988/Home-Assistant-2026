@@ -8,10 +8,9 @@ let initialized = false;
 
 export function getSocket(): Socket {
   if (!socket) {
-    socket = io(API_URL, {
-      transports: ["websocket", "polling"],
-      reconnection: true,
-    });
+    // Empty API_URL => connect same-origin (behind the reverse proxy).
+    const opts = { transports: ["websocket", "polling"], reconnection: true };
+    socket = API_URL ? io(API_URL, opts) : io(opts);
   }
   return socket;
 }
