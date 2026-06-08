@@ -82,6 +82,22 @@ NEXT_PUBLIC_API_URL=http://localhost:5000 npm run dev
 | GET  | `/api/ha/areas` | Area / device / entity registries (for future room grouping) |
 | GET  | `/api/ha/config` | Home Assistant config (location, version) |
 | WS   | `/socket.io` | `snapshot` on connect, then `state_changed` / `state_removed` |
+| POST | `/api/auth/login` | Sign in; sets httpOnly JWT cookies |
+| POST | `/api/auth/logout` | Clear auth cookies |
+| POST | `/api/auth/refresh` | Rotate the access token (refresh cookie) |
+| GET  | `/api/auth/me` | Current user (401 if not signed in) |
+| GET  | `/api/admin/overview` | Admin-only stats (JWT + admin role) |
+
+## Admin login (Phase 2)
+
+The dashboard at `/` is open for viewing and device control. Editing the
+dashboard lives behind a login at `/admin` (link in the header).
+
+- On first boot the backend seeds an admin from `.env`
+  (`ADMIN_USERNAME` / `ADMIN_PASSWORD`) — **set these before first run**.
+- Auth uses JWT in httpOnly cookies (XSS-safe); the SQLite DB persists on the
+  `sidra-data` volume.
+- Phase 3/4 plug the dashboard-builder CRUD into this gate.
 
 ---
 

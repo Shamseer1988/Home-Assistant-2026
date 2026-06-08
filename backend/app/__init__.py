@@ -5,10 +5,30 @@ from flask import Flask
 from flask_cors import CORS
 
 from .config import Config
-from .extensions import socketio
+from .extensions import db, jwt, socketio
 from .services.ha_client import HAClient
 from .services.ha_ws import HAWebSocketBridge
 from .services.state_store import store
+
+
+def _seed_admin(app):
+    """Create the initial admin user on first boot if no users exist."""
+    from .models.user import User
+
+    if User.query.count() > 0:
+        return
+    user = User(
+        username=app.config["ADMIN_USERNAME"],
+        email=app.config["ADMIN_EMAIL"] or None,
+        role="admin",
+    )
+    user.set_password(app.config["ADMIN_PASSWORD"])
+    db.session.add(user)
+    db.session.commit()
+    app.logger.warning(
+        "Seeded admin user '%s'. Change ADMIN_PASSWORD in .env and restart.",
+        app.config["ADMIN_USERNAME"],
+    )
 
 
 def create_app(config_object=Config):
@@ -21,8 +41,23 @@ def create_app(config_object=Config):
     )
 
     # CORS for REST + Socket.IO (browser is on a different origin than the API).
-    CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
+    # supports_credentials lets the httpOnly JWT cookie flow cross-origin; with
+    # it, Flask-CORS reflects the request origin instead of sending "*".
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
+        supports_credentials=True,
+    )
     socketio.init_app(app, cors_allowed_origins=app.config["CORS_ORIGINS"])
+
+    # --- Database + auth ---
+    db.init_app(app)
+    jwt.init_app(app)
+    with app.app_context():
+        from . import models  # noqa: F401  (registers models on the metadata)
+
+        db.create_all()
+        _seed_admin(app)
 
     # --- Home Assistant REST client ---
     app.ha_client = HAClient(
@@ -49,11 +84,15 @@ def create_app(config_object=Config):
     )
 
     # --- Blueprints ---
-    from .api.health import bp as health_bp
+    from .api.admin import bp as admin_bp
+    from .api.auth import bp as auth_bp
     from .api.ha import bp as ha_bp
+    from .api.health import bp as health_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(ha_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
 
     # --- Socket.IO handlers (import registers the decorators) ---
     from .sockets import events  # noqa: F401

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
   title: "SIDRA — Smart Home",
@@ -22,9 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>
-          <AppShell>{children}</AppShell>
-        </Providers>
+        {/* Providers (React Query + realtime) wrap everything; the dashboard
+            shell lives in the (app) route group so /login can render bare. */}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

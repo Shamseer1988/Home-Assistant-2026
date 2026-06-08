@@ -128,9 +128,9 @@ Only the **layout** lives in the DB. Live values always come from HA.
 
 | Phase | Scope | Status |
 |------:|-------|--------|
-| 0 | Monorepo, Docker, Flask boot, Next.js shell, live entity count | **scaffolded** |
-| 1 | HA REST+WS bridge, live tiles, end-to-end toggle | **scaffolded** |
-| 2 | Auth & admin foundation (JWT, seeded admin, route guards) | planned |
+| 0 | Monorepo, Docker, Flask boot, Next.js shell, live entity count | **done** |
+| 1 | HA REST+WS bridge, live tiles, end-to-end toggle | **done** |
+| 2 | Auth & admin foundation (JWT cookies, seeded admin, route guards) | **done** |
 | 3 | Dynamic dashboard from DB + importer that seeds rooms/entities from HA areas | planned |
 | 4 | Admin CRUD: add/edit sections, cards, entities-to-room, overrides, audit | planned |
 | 5 | Rich card library, charts, animations, responsive polish, PWA | planned |

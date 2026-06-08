@@ -6,7 +6,8 @@ export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`);
+  // credentials: include so the httpOnly JWT cookie travels cross-origin.
+  const res = await fetch(`${API_URL}${path}`, { credentials: "include" });
   if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
   return res.json() as Promise<T>;
 }
@@ -19,6 +20,7 @@ export async function callService(
   const res = await fetch(`${API_URL}/api/ha/services/${domain}/${service}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`service ${domain}.${service} -> ${res.status}`);

@@ -13,6 +13,9 @@ services:
     env_file: .env
     ports:
       - "5000:5000"
+    volumes:
+      # Persist the SQLite database (users, and from Phase 3 the dashboard layout).
+      - sidra-data:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/api/health').status==200 else 1)"]
@@ -54,6 +57,6 @@ services:
 #  redis:
 #    image: redis:7-alpine
 #    restart: unless-stopped
-#
-# volumes:
-#   sidra-db:
+
+volumes:
+  sidra-data:

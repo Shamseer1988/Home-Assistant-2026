@@ -1,5 +1,6 @@
 """Environment-driven configuration."""
 import os
+from datetime import timedelta
 
 from dotenv import load_dotenv
 
@@ -38,3 +39,24 @@ class Config:
     # ---- Server ----
     PORT = int(os.getenv("PORT", "5000"))
     CORS_ORIGINS = _parse_origins(os.getenv("CORS_ORIGINS", "*"))
+
+    # ---- Database ----
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///sidra.db")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # ---- Auth / JWT (httpOnly cookies) ----
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or SECRET_KEY
+    JWT_TOKEN_LOCATION = ["cookies"]
+    # Set JWT_COOKIE_SECURE=true once you serve the app over HTTPS (Phase 7).
+    JWT_COOKIE_SECURE = os.getenv("JWT_COOKIE_SECURE", "false").lower() == "true"
+    # Same host, different port counts as same-site, so Lax works on the LAN.
+    JWT_COOKIE_SAMESITE = os.getenv("JWT_COOKIE_SAMESITE", "Lax")
+    # Lax already blocks cross-site cookie sending; enable CSRF tokens in Phase 7.
+    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+
+    # ---- Seed admin (created on first boot if no users exist) ----
+    ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin")
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
