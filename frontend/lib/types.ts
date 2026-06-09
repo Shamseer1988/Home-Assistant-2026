@@ -51,6 +51,7 @@ export interface AdminItem {
   label: string | null;
   icon: string | null;
   sort: number;
+  hidden: boolean;
   live_name: string | null;
   override: AdminOverride | null;
 }

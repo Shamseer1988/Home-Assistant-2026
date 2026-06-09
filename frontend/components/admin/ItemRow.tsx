@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Check, Pencil, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Eye, EyeOff, Pencil, Trash2, X } from "lucide-react";
 import { deleteItem, updateItem } from "@/lib/admin";
 import type { AdminItem, AdminSection } from "@/lib/types";
 import { IconButton } from "@/components/ui/IconButton";
@@ -57,11 +57,25 @@ export function ItemRow({
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-xl border border-line/10 bg-fg/[0.03] px-2.5 py-1.5">
+    <div
+      className={`flex items-center gap-1 rounded-xl border border-line/10 bg-fg/[0.03] px-2.5 py-1.5 ${
+        item.hidden ? "opacity-50" : ""
+      }`}
+    >
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm text-fg">{display}</p>
         <p className="truncate text-[11px] text-muted">{item.entity_id}</p>
       </div>
+      <IconButton
+        title={item.hidden ? "Show on dashboard" : "Hide from dashboard"}
+        onClick={() => run(() => updateItem(item.id, { hidden: !item.hidden }))}
+      >
+        {item.hidden ? (
+          <EyeOff className="h-4 w-4 text-rose-400" />
+        ) : (
+          <Eye className="h-4 w-4 text-emerald-400" />
+        )}
+      </IconButton>
       <IconButton title="Move up" disabled={index === 0} onClick={() => onMove(-1)}>
         <ArrowUp className="h-4 w-4" />
       </IconButton>

@@ -31,7 +31,13 @@ Assistant server, and connects to HA over the LAN via its API.
 - **Cute v2 Home dashboard:** a welcome hero (live clock, greeting, stat chips),
   animated graphical weather, **Home-Mode** & **room** control popups, persons
   with location & avatars, a media card, an **alarm clock**, an energy mini, and a
-  **live MJPEG main camera**. Plus a **light / dark** theme toggle.
+  **live MJPEG camera** (◀ ▶ to switch, Full View, long-press → detail). Plus a
+  **light / dark** theme toggle.
+- **Login with Home Assistant accounts** (`AUTH_MODE=ha`): sign in with your HA
+  username/password — validated against HA's own auth — to access the dashboard.
+  A local break-glass admin (`.env`) always works too.
+- **Per-room show/hide:** the admin builder has an eye toggle on every tile to
+  hide/show it on the dashboard without removing it.
 - **Admin login** (JWT cookies) with a protected `/admin` area, and a one-click
   **"Sync rooms from Home Assistant"** importer that builds the layout from your
   areas (disabled/hidden/diagnostic entities skipped). The layout persists in

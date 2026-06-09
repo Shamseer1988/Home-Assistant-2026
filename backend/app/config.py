@@ -63,3 +63,9 @@ class Config:
     ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin")
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
+
+    # ---- Login mode ----
+    # "ha"    -> validate username/password against Home Assistant accounts
+    #            (the seeded admin still works as break-glass).
+    # "local" -> only the local users table.
+    AUTH_MODE = os.getenv("AUTH_MODE", "ha")

@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await login({ username, password });
-      router.replace("/admin");
+      router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     }
@@ -28,11 +28,15 @@ export default function LoginPage() {
       <div className="w-full max-w-sm rounded-3xl border border-line/10 bg-fg/[0.04] p-8 shadow-glass backdrop-blur-xl">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sidra-blue to-sidra-sky shadow-glow">
-            <Lock className="h-6 w-6 text-fg" />
+            <Lock className="h-6 w-6 text-white" />
           </span>
           <div>
-            <h1 className="text-xl font-bold text-fg">SIDRA Admin</h1>
-            <p className="text-sm text-muted">Sign in to manage the dashboard</p>
+            <h1 className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-2xl font-black tracking-[0.2em] text-transparent">
+              SIDRA
+            </h1>
+            <p className="mt-1 text-sm text-muted">
+              Sign in with your Home Assistant account
+            </p>
           </div>
         </div>
 

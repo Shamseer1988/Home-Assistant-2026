@@ -1,5 +1,7 @@
 """Authentication endpoints (JWT in httpOnly cookies)."""
-from flask import Blueprint, jsonify, request
+import secrets
+
+from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -10,7 +12,7 @@ from flask_jwt_extended import (
     unset_jwt_cookies,
 )
 
-from ..extensions import limiter
+from ..extensions import db, limiter
 from ..models.user import User
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
@@ -29,9 +31,29 @@ def login():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
 
     user = User.query.filter_by(username=username).first()
-    if not user or not user.check_password(password):
+    authed = False
+
+    # 1) Local users (incl. the seeded break-glass admin).
+    if user and user.check_password(password):
+        authed = True
+    # 2) Home Assistant accounts.
+    elif current_app.config.get("AUTH_MODE", "ha") == "ha":
+        try:
+            if current_app.ha_client.validate_ha_login(username, password):
+                authed = True
+                if not user:
+                    user = User(username=username, role="admin")
+                    user.set_password(secrets.token_hex(16))  # HA is the source of truth
+                    db.session.add(user)
+                    db.session.commit()
+        except Exception as e:  # noqa: BLE001
+            current_app.logger.warning("HA login validation error: %s", e)
+
+    if not authed or not user:
         return jsonify({"error": "Invalid username or password"}), 401
 
     access, refresh = _tokens_for(user)

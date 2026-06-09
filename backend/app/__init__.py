@@ -11,6 +11,25 @@ from .services.ha_ws import HAWebSocketBridge
 from .services.state_store import store
 
 
+def _ensure_columns(app):
+    """Tiny additive migration: add new columns to existing tables (SQLite)."""
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(db.engine)
+    if "section_items" not in inspector.get_table_names():
+        return
+    columns = {c["name"] for c in inspector.get_columns("section_items")}
+    if "hidden" not in columns:
+        try:
+            db.session.execute(
+                text("ALTER TABLE section_items ADD COLUMN hidden BOOLEAN NOT NULL DEFAULT 0")
+            )
+            db.session.commit()
+            app.logger.info("Migrated: added section_items.hidden")
+        except Exception as e:  # noqa: BLE001
+            app.logger.warning("Column migration failed: %s", e)
+
+
 def _seed_admin(app):
     """Create the initial admin user on first boot if no users exist."""
     from .models.user import User
@@ -65,6 +84,7 @@ def create_app(config_object=Config):
         from . import models  # noqa: F401  (registers models on the metadata)
 
         db.create_all()
+        _ensure_columns(app)
         _seed_admin(app)
 
     # --- Home Assistant REST client ---

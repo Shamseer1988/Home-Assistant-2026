@@ -24,7 +24,7 @@ def get_dashboard():
         items = []
         for item in section.items:  # ordered by relationship
             override = overrides.get(item.entity_id)
-            if override and override.hidden:
+            if item.hidden or (override and override.hidden):
                 continue
             items.append(
                 {

@@ -9,13 +9,15 @@ import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 import { WelcomeHero } from "@/components/home/WelcomeHero";
 import { GraphicalWeather } from "@/components/home/GraphicalWeather";
+import { CameraViewer } from "@/components/home/CameraViewer";
+import { ClimateDialCard } from "@/components/home/ClimateDialCard";
+import { QuickControls } from "@/components/home/QuickControls";
 import { HomeModeCard } from "@/components/home/HomeModeCard";
-import { PersonsCard } from "@/components/home/PersonsCard";
-import { MainCamera } from "@/components/home/MainCamera";
 import { AlarmClockCard } from "@/components/home/AlarmClockCard";
-import { MediaCard } from "@/components/home/MediaCard";
 import { RoomsCard } from "@/components/home/RoomsCard";
+import { MediaCard } from "@/components/home/MediaCard";
 import { EnergyMiniCard } from "@/components/home/EnergyMiniCard";
+import { PersonsCard } from "@/components/home/PersonsCard";
 
 export default function HomePage() {
   const setSnapshot = useEntityStore((s) => s.setSnapshot);
@@ -43,21 +45,32 @@ export default function HomePage() {
 
   return (
     <div className="space-y-4">
-      <WelcomeHero />
+      {/* Two-column hero */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <WelcomeHero />
+        </div>
+        <GraphicalWeather />
+      </div>
+
+      {/* Camera + control rail */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <MainCamera />
+          <CameraViewer />
+          <RoomsCard />
           <div className="grid gap-4 sm:grid-cols-2">
+            <EnergyMiniCard />
+            <MediaCard />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <ClimateDialCard />
+          <QuickControls />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <HomeModeCard />
             <AlarmClockCard />
           </div>
-          <RoomsCard />
-          <MediaCard />
-        </div>
-        <div className="space-y-4">
-          <GraphicalWeather />
           <PersonsCard />
-          <EnergyMiniCard />
         </div>
       </div>
     </div>

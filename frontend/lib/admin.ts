@@ -38,7 +38,7 @@ export const addItems = (sectionId: number, entityIds: string[]) =>
   });
 export const updateItem = (
   id: number,
-  data: { label?: string | null; section_id?: number }
+  data: { label?: string | null; section_id?: number; hidden?: boolean }
 ) => send("PATCH", `/api/admin/items/${id}`, data);
 export const deleteItem = (id: number) =>
   send("DELETE", `/api/admin/items/${id}`);

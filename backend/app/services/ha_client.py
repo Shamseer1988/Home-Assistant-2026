@@ -84,6 +84,36 @@ class HAClient:
         r.raise_for_status()
         return r.content, r.headers.get("Content-Type", "image/jpeg")
 
+    def validate_ha_login(self, username, password):
+        """Validate credentials against Home Assistant's own auth (login_flow).
+
+        Returns True only when HA accepts the username/password. Uses bare
+        requests (no bearer token) since the auth endpoints are unauthenticated.
+        """
+        client_id = self.base_url + "/"
+        start = requests.post(
+            f"{self.base_url}/auth/login_flow",
+            json={
+                "client_id": client_id,
+                "handler": ["homeassistant", None],
+                "redirect_uri": client_id,
+            },
+            timeout=self.timeout,
+            verify=self.session.verify,
+        )
+        start.raise_for_status()
+        flow_id = start.json().get("flow_id")
+        if not flow_id:
+            return False
+        step = requests.post(
+            f"{self.base_url}/auth/login_flow/{flow_id}",
+            json={"client_id": client_id, "username": username, "password": password},
+            timeout=self.timeout,
+            verify=self.session.verify,
+        )
+        result = step.json() if step.content else {}
+        return result.get("type") == "create_entry"
+
     def get_forecast(self, entity_id, forecast_type="daily"):
         r = self.session.post(
             self._url("/api/services/weather/get_forecasts"),

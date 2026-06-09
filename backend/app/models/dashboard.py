@@ -63,6 +63,7 @@ class SectionItem(db.Model):
     label = db.Column(db.String(255))
     icon = db.Column(db.String(120))
     sort = db.Column(db.Integer, default=0, nullable=False)
+    hidden = db.Column(db.Boolean, default=False, nullable=False)
     config_json = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

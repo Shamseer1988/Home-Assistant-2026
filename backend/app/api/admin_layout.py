@@ -64,6 +64,7 @@ def _item_dict(i):
         "label": i.label,
         "icon": i.icon,
         "sort": i.sort,
+        "hidden": i.hidden,
     }
 
 
@@ -211,6 +212,8 @@ def update_item(item_id):
         item.label = data["label"] or None
     if "icon" in data:
         item.icon = data["icon"] or None
+    if "hidden" in data:
+        item.hidden = bool(data["hidden"])
     if data.get("section_id"):
         target = _get_or_404(Section, data["section_id"])
         item.section_id = target.id
