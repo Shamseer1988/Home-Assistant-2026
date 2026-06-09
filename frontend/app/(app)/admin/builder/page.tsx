@@ -21,8 +21,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ArrowLeft, Loader2, Plus } from "lucide-react";
-import { createSection, fetchLayout, reorderSections } from "@/lib/admin";
+import {
+  createSection,
+  fetchAdminDashboards,
+  fetchLayout,
+  reorderSections,
+} from "@/lib/admin";
 import type { AdminSection } from "@/lib/types";
+import { DashboardsManager } from "@/components/admin/DashboardsManager";
 import { RoomEditor } from "@/components/admin/RoomEditor";
 import { VisibilityPanel } from "@/components/admin/VisibilityPanel";
 import { WidgetsPanel } from "@/components/admin/WidgetsPanel";
@@ -60,9 +66,17 @@ function SortableRoom({
 
 export default function BuilderPage() {
   const qc = useQueryClient();
+  const { data: dashboards } = useQuery({
+    queryKey: ["admin", "dashboards"],
+    queryFn: fetchAdminDashboards,
+  });
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const effectiveId = selectedId ?? dashboards?.find((d) => d.is_default)?.id ?? null;
+
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["admin", "layout"],
-    queryFn: fetchLayout,
+    queryKey: ["admin", "layout", effectiveId],
+    queryFn: () => fetchLayout(effectiveId ?? undefined),
+    enabled: dashboards != null,
   });
   const [error, setError] = useState<string | null>(null);
   const [newRoom, setNewRoom] = useState("");
@@ -75,7 +89,9 @@ export default function BuilderPage() {
 
   const reload = async () => {
     await refetch();
+    qc.invalidateQueries({ queryKey: ["admin", "dashboards"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
+    qc.invalidateQueries({ queryKey: ["dashboards"] });
   };
 
   const run = async (fn: () => Promise<unknown>) => {
@@ -98,7 +114,7 @@ export default function BuilderPage() {
     const newI = ids.indexOf(Number(over.id));
     if (oldI < 0 || newI < 0) return;
     const newIds = arrayMove(ids, oldI, newI);
-    qc.setQueryData(["admin", "layout"], (old: any) =>
+    qc.setQueryData(["admin", "layout", effectiveId], (old: any) =>
       old ? { ...old, sections: arrayMove(old.sections, oldI, newI) } : old
     );
     run(() => reorderSections(newIds));
@@ -108,7 +124,7 @@ export default function BuilderPage() {
     const name = newRoom.trim();
     if (!name) return;
     setAdding(true);
-    await run(() => createSection(name));
+    await run(() => createSection(name, effectiveId ?? undefined));
     setNewRoom("");
     setAdding(false);
   };
@@ -127,6 +143,17 @@ export default function BuilderPage() {
           <h1 className="text-2xl font-bold text-fg">Dashboard Builder</h1>
         </div>
       </header>
+
+      <DashboardsManager
+        dashboards={dashboards || []}
+        selectedId={effectiveId}
+        onSelect={setSelectedId}
+        run={run}
+      />
+
+      <p className="text-sm font-semibold text-fg">
+        Editing: {dashboards?.find((d) => d.id === effectiveId)?.name || "Home"}
+      </p>
 
       <Card className="flex items-center gap-2 p-3">
         <input

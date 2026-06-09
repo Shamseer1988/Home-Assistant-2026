@@ -1,8 +1,7 @@
-"""Public dashboard layout endpoint.
+"""Public dashboard layout endpoints.
 
-Returns the default dashboard as an ordered tree of sections + items, with
-per-entity overrides applied. Live values are merged client-side from the
-Socket.IO stream, keyed by entity_id.
+Returns dashboards as ordered trees of sections + items, with per-entity
+overrides applied. Live values are merged client-side from the Socket.IO stream.
 """
 from flask import Blueprint, jsonify
 
@@ -18,14 +17,27 @@ def get_settings():
     return jsonify({s.key: s.value for s in Setting.query.all()})
 
 
-@bp.get("/dashboard")
-def get_dashboard():
-    dashboard = Dashboard.query.filter_by(is_default=True).first()
-    if not dashboard:
-        return jsonify({"id": None, "name": None, "slug": None, "sections": []})
+@bp.get("/dashboards")
+def list_dashboards():
+    """All dashboards for the switcher (visible ones; admin sees hidden too)."""
+    rows = Dashboard.query.order_by(Dashboard.sort, Dashboard.id).all()
+    return jsonify(
+        [
+            {
+                "id": d.id,
+                "name": d.name,
+                "slug": d.slug,
+                "is_default": d.is_default,
+                "hidden": d.hidden,
+                "sort": d.sort,
+            }
+            for d in rows
+        ]
+    )
 
+
+def _tree(dashboard):
     overrides = {o.entity_id: o for o in EntityOverride.query.all()}
-
     sections = []
     for section in dashboard.sections:  # ordered by relationship
         if section.hidden:
@@ -47,12 +59,25 @@ def get_dashboard():
         sections.append(
             {"id": section.id, "name": section.name, "icon": section.icon, "items": items}
         )
+    return {
+        "id": dashboard.id,
+        "name": dashboard.name,
+        "slug": dashboard.slug,
+        "sections": sections,
+    }
 
-    return jsonify(
-        {
-            "id": dashboard.id,
-            "name": dashboard.name,
-            "slug": dashboard.slug,
-            "sections": sections,
-        }
-    )
+
+@bp.get("/dashboard")
+def get_dashboard():
+    dashboard = Dashboard.query.filter_by(is_default=True).first()
+    if not dashboard:
+        return jsonify({"id": None, "name": None, "slug": None, "sections": []})
+    return jsonify(_tree(dashboard))
+
+
+@bp.get("/dashboard/<slug>")
+def get_dashboard_by_slug(slug):
+    dashboard = Dashboard.query.filter_by(slug=slug).first()
+    if not dashboard:
+        return jsonify({"error": "not found"}), 404
+    return jsonify(_tree(dashboard))

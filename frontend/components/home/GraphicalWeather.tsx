@@ -65,7 +65,7 @@ export function GraphicalWeather() {
   const today = forecast[0];
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-black/5 bg-gradient-to-br from-sky-200 to-blue-400 p-5 text-slate-900 shadow-glass dark:border-white/10 dark:from-[#1e3a96] dark:to-[#10204d] dark:text-white">
+    <div className="relative overflow-hidden rounded-3xl border border-black/5 bg-gradient-to-br from-white/80 to-sky-200/70 p-5 text-slate-900 shadow-glass backdrop-blur-xl dark:border-white/10 dark:from-[#1e3a96] dark:to-[#10204d] dark:text-white">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-5xl font-bold leading-none">

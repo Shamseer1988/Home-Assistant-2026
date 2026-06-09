@@ -8,6 +8,7 @@ import type { Health } from "@/lib/types";
 import { useAuth } from "@/lib/useAuth";
 import { useEntityStore } from "@/store/entities";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { GlobalSearch } from "./GlobalSearch";
 
 export function Header() {
   const connected = useEntityStore((s) => s.connected);
@@ -19,8 +20,9 @@ export function Header() {
   });
 
   return (
-    <header className="mb-6 flex items-center justify-end gap-2">
-      <div className="flex items-center gap-2 rounded-2xl border border-line/10 bg-fg/[0.04] px-3 py-2 text-xs backdrop-blur-xl">
+    <header className="mb-6 flex items-center gap-2">
+      <GlobalSearch />
+      <div className="ml-auto flex items-center gap-2 rounded-2xl border border-line/10 bg-fg/[0.04] px-3 py-2 text-xs backdrop-blur-xl">
         {connected ? (
           <Wifi className="h-4 w-4 text-emerald-400" />
         ) : (

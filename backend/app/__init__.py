@@ -32,6 +32,7 @@ def _ensure_columns(app):
 
     add("section_items", "hidden", "hidden BOOLEAN NOT NULL DEFAULT 0")
     add("sections", "hidden", "hidden BOOLEAN NOT NULL DEFAULT 0")
+    add("dashboards", "hidden", "hidden BOOLEAN NOT NULL DEFAULT 0")
 
 
 def _seed_admin(app):

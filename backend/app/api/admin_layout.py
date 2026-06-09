@@ -89,7 +89,10 @@ def _override_dict(o):
 @bp.get("/layout")
 @admin_required
 def get_layout():
-    dash = _default_dashboard()
+    dashboard_id = request.args.get("dashboard_id", type=int)
+    dash = db.session.get(Dashboard, dashboard_id) if dashboard_id else None
+    if dash is None:
+        dash = _default_dashboard()
     overrides = {o.entity_id: o for o in EntityOverride.query.all()}
     sections = []
     for s in dash.sections:
@@ -114,6 +117,96 @@ def get_layout():
             }
         )
     return jsonify({"id": dash.id, "name": dash.name, "sections": sections})
+
+
+# ----------------------------------------------------------------- dashboards
+def _slugify(name):
+    base = "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-") or "dashboard"
+    slug = base
+    n = 2
+    while Dashboard.query.filter_by(slug=slug).first():
+        slug = f"{base}-{n}"
+        n += 1
+    return slug
+
+
+def _dashboard_dict(d):
+    return {
+        "id": d.id,
+        "name": d.name,
+        "slug": d.slug,
+        "is_default": d.is_default,
+        "hidden": d.hidden,
+        "sort": d.sort,
+    }
+
+
+@bp.get("/dashboards")
+@admin_required
+def admin_list_dashboards():
+    rows = Dashboard.query.order_by(Dashboard.sort, Dashboard.id).all()
+    return jsonify([_dashboard_dict(d) for d in rows])
+
+
+@bp.post("/dashboards")
+@admin_required
+def create_dashboard():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+    dash = Dashboard(
+        name=name,
+        slug=_slugify(name),
+        is_default=Dashboard.query.count() == 0,
+        sort=_next_sort(Dashboard),
+    )
+    db.session.add(dash)
+    _audit("create_dashboard", name)
+    db.session.commit()
+    return jsonify(_dashboard_dict(dash)), 201
+
+
+@bp.patch("/dashboards/<int:dashboard_id>")
+@admin_required
+def update_dashboard(dashboard_id):
+    dash = _get_or_404(Dashboard, dashboard_id)
+    data = request.get_json(silent=True) or {}
+    if "name" in data:
+        name = (data["name"] or "").strip()
+        if not name:
+            return jsonify({"error": "name is required"}), 400
+        dash.name = name
+    if "hidden" in data:
+        dash.hidden = bool(data["hidden"])
+    if data.get("is_default"):
+        Dashboard.query.update({"is_default": False})
+        dash.is_default = True
+    _audit("update_dashboard", dash.name)
+    db.session.commit()
+    return jsonify(_dashboard_dict(dash))
+
+
+@bp.delete("/dashboards/<int:dashboard_id>")
+@admin_required
+def delete_dashboard(dashboard_id):
+    dash = _get_or_404(Dashboard, dashboard_id)
+    if dash.is_default:
+        return jsonify({"error": "cannot delete the default dashboard"}), 400
+    _audit("delete_dashboard", dash.name)
+    db.session.delete(dash)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@bp.post("/dashboards/reorder")
+@admin_required
+def reorder_dashboards():
+    order = (request.get_json(silent=True) or {}).get("order") or []
+    for index, did in enumerate(order):
+        Dashboard.query.filter_by(id=did).update({"sort": index})
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 @bp.get("/entities")
@@ -144,7 +237,8 @@ def create_section():
     name = (data.get("name") or "").strip()
     if not name:
         return jsonify({"error": "name is required"}), 400
-    dash = _default_dashboard()
+    dashboard_id = data.get("dashboard_id")
+    dash = (db.session.get(Dashboard, dashboard_id) if dashboard_id else None) or _default_dashboard()
     section = Section(
         dashboard_id=dash.id,
         name=name,

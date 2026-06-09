@@ -18,6 +18,7 @@ class Dashboard(db.Model):
     name = db.Column(db.String(120), nullable=False)
     slug = db.Column(db.String(120), unique=True, nullable=False)
     is_default = db.Column(db.Boolean, default=False, nullable=False)
+    hidden = db.Column(db.Boolean, default=False, nullable=False)
     sort = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
