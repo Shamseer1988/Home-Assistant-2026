@@ -6,12 +6,15 @@ import { ChevronLeft, ChevronRight, Maximize2, VideoOff, X } from "lucide-react"
 import { cameraStreamUrl } from "@/lib/api";
 import { friendlyName } from "@/lib/ha";
 import { selectCameras } from "@/lib/selectors";
+import { useSettings } from "@/lib/useSettings";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 
 export function CameraViewer() {
   const entities = useEntityStore((s) => s.entities);
-  const cams = selectCameras(entities);
+  const { data: settings } = useSettings();
+  const hidden = new Set<string>((settings?.hidden_cameras as string[]) || []);
+  const cams = selectCameras(entities).filter((c) => !hidden.has(c.entity_id));
   const router = useRouter();
   const [idx, setIdx] = useState(0);
   const [full, setFull] = useState(false);

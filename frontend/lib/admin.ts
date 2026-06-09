@@ -24,8 +24,11 @@ export const createSection = (name: string, icon?: string) =>
   send("POST", "/api/admin/sections", { name, icon });
 export const updateSection = (
   id: number,
-  data: { name?: string; icon?: string | null }
+  data: { name?: string; icon?: string | null; hidden?: boolean }
 ) => send("PATCH", `/api/admin/sections/${id}`, data);
+
+export const setSetting = (key: string, value: unknown) =>
+  send("PUT", `/api/admin/settings/${key}`, { value });
 export const deleteSection = (id: number) =>
   send("DELETE", `/api/admin/sections/${id}`);
 export const reorderSections = (order: number[]) =>

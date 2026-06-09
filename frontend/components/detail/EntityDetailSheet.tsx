@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { friendlyName } from "@/lib/ha";
@@ -14,7 +15,9 @@ export function EntityDetailSheet() {
   const entity = useEntityStore((s) => (entityId ? s.entities[entityId] : undefined));
   const Icon = entity ? iconFor(entity) : null;
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {entityId && (
         <motion.div
@@ -62,6 +65,7 @@ export function EntityDetailSheet() {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

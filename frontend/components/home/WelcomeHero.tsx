@@ -13,9 +13,9 @@ import { useAuth } from "@/lib/useAuth";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
-import { EntityTile } from "@/components/cards/EntityTile";
 import { StatTile } from "@/components/cards/StatTile";
 import { AlarmPanel } from "@/components/special/AlarmPanel";
+import { LightsPopup } from "./LightsPopup";
 import { WaterCard } from "./WaterCard";
 
 const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "—");
@@ -149,15 +149,7 @@ export function WelcomeHero() {
           )}
         </Modal>
       )}
-      {popup === "lights" && (
-        <Modal title={`Lights — ${lightsOn} on`} onClose={() => setPopup(null)}>
-          <div className="grid grid-cols-2 gap-3">
-            {lights.map((e) => (
-              <EntityTile key={e.entity_id} entityId={e.entity_id} />
-            ))}
-          </div>
-        </Modal>
-      )}
+      {popup === "lights" && <LightsPopup onClose={() => setPopup(null)} />}
       {popup === "energy" && (
         <Modal title="Energy" onClose={() => setPopup(null)}>
           <div className="grid grid-cols-2 gap-3">

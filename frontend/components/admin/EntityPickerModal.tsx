@@ -8,6 +8,25 @@ import { Modal } from "@/components/ui/Modal";
 
 const MAX_VISIBLE = 200;
 
+const OFFISH = ["off", "unavailable", "unknown", "closed", "idle", "standby"];
+const FILTERS: { k: string; label: string }[] = [
+  { k: "all", label: "All" },
+  { k: "active", label: "Active" },
+  { k: "unavailable", label: "Unavailable" },
+  { k: "light", label: "Lights" },
+  { k: "switch", label: "Switches" },
+  { k: "fan", label: "Fans" },
+  { k: "sensor", label: "Sensors" },
+  { k: "binary_sensor", label: "Binary" },
+];
+
+function matchFilter(e: { domain: string; state: string }, f: string) {
+  if (f === "all") return true;
+  if (f === "active") return !OFFISH.includes(e.state);
+  if (f === "unavailable") return ["unavailable", "unknown"].includes(e.state);
+  return e.domain === f;
+}
+
 export function EntityPickerModal({
   existing,
   onClose,
@@ -24,20 +43,21 @@ export function EntityPickerModal({
     queryFn: fetchPickerEntities,
   });
   const [q, setQ] = useState("");
+  const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
-    const all = (data || []).filter((e) => !existing.has(e.entity_id));
     const term = q.toLowerCase().trim();
-    const list = term
-      ? all.filter(
-          (e) =>
-            e.entity_id.toLowerCase().includes(term) ||
-            e.name.toLowerCase().includes(term)
-        )
-      : all;
+    const list = (data || []).filter(
+      (e) =>
+        !existing.has(e.entity_id) &&
+        matchFilter(e, filter) &&
+        (!term ||
+          e.entity_id.toLowerCase().includes(term) ||
+          e.name.toLowerCase().includes(term))
+    );
     return { rows: list.slice(0, MAX_VISIBLE), total: list.length };
-  }, [data, q, existing]);
+  }, [data, q, filter, existing]);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -72,6 +92,23 @@ export function EntityPickerModal({
           placeholder="Search entities…"
           className="w-full bg-transparent py-2.5 text-sm text-fg outline-none"
         />
+      </div>
+
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {FILTERS.map((f) => (
+          <button
+            key={f.k}
+            type="button"
+            onClick={() => setFilter(f.k)}
+            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+              filter === f.k
+                ? "bg-sidra-sky text-white"
+                : "border border-line/10 bg-fg/5 text-muted hover:bg-fg/10"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (

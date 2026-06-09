@@ -61,6 +61,7 @@ export interface AdminSection {
   name: string;
   icon: string | null;
   sort: number;
+  hidden: boolean;
   items: AdminItem[];
 }
 

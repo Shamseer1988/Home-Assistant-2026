@@ -4,12 +4,15 @@ import { MapPin } from "lucide-react";
 import { imageUrl } from "@/lib/api";
 import { friendlyName } from "@/lib/ha";
 import { selectPersons } from "@/lib/selectors";
+import { useSettings } from "@/lib/useSettings";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 
 export function PersonsCard() {
   const entities = useEntityStore((s) => s.entities);
-  const persons = selectPersons(entities);
+  const { data: settings } = useSettings();
+  const hidden = new Set<string>((settings?.hidden_persons as string[]) || []);
+  const persons = selectPersons(entities).filter((p) => !hidden.has(p.entity_id));
   if (persons.length === 0) return null;
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   addItems,
   deleteSection,
@@ -56,7 +56,7 @@ export function RoomEditor({
   );
 
   return (
-    <Card className="p-4">
+    <Card className={`p-4 ${section.hidden ? "opacity-60" : ""}`}>
       <div className="mb-3 flex items-center gap-2">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-fg/5">
           <Icon className="h-4 w-4 text-sidra-sky" />
@@ -96,6 +96,16 @@ export function RoomEditor({
             <span className="mr-1 text-xs text-muted">
               {section.items.length}
             </span>
+            <IconButton
+              title={section.hidden ? "Show room on dashboard" : "Hide room from dashboard"}
+              onClick={() => run(() => updateSection(section.id, { hidden: !section.hidden }))}
+            >
+              {section.hidden ? (
+                <EyeOff className="h-4 w-4 text-rose-400" />
+              ) : (
+                <Eye className="h-4 w-4 text-emerald-400" />
+              )}
+            </IconButton>
             <IconButton title="Move up" disabled={index === 0} onClick={() => onMoveRoom(-1)}>
               <ArrowUp className="h-4 w-4" />
             </IconButton>

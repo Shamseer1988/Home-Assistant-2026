@@ -3,6 +3,7 @@ import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { Header } from "./Header";
 import { EntityDetailSheet } from "@/components/detail/EntityDetailSheet";
+import { Toaster } from "@/components/ui/Toaster";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
       <BottomNav />
       <EntityDetailSheet />
+      <Toaster />
     </div>
   );
 }

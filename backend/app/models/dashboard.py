@@ -39,6 +39,7 @@ class Section(db.Model):
     name = db.Column(db.String(120), nullable=False)
     icon = db.Column(db.String(120))
     sort = db.Column(db.Integer, default=0, nullable=False)
+    hidden = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     dashboard = db.relationship("Dashboard", back_populates="sections")

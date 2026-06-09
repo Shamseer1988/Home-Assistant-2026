@@ -25,8 +25,13 @@ export function WaterCard() {
     (e) => domainOf(e.entity_id) === "switch" && /water[_ ]?motor|motor|pump/.test(text(e))
   );
 
-  const pct = pctS ? Math.round(parseFloat(pctS.state)) : NaN;
-  const fill = Number.isNaN(pct) ? 0 : Math.min(100, Math.max(0, pct));
+  const r = (s?: { state: string }) =>
+    s && Number.isFinite(parseFloat(s.state)) ? Math.round(parseFloat(s.state)) : null;
+  const pct = r(pctS);
+  const fill = pct == null ? 0 : Math.min(100, Math.max(0, pct));
+  const cm = r(cmS);
+  const liters = r(litS);
+  const dist = r(distS);
   const motorOn = motor?.state === "on";
 
   return (
@@ -38,12 +43,10 @@ export function WaterCard() {
           style={{ height: `${fill}%`, background: "linear-gradient(to bottom,#34d399,#38bdf8)" }}
         />
         <div className="relative z-10 flex h-full flex-col items-center justify-center gap-1 p-4 text-white">
-          <p className="text-6xl font-black drop-shadow-lg">
-            {Number.isNaN(pct) ? "--" : pct}%
-          </p>
-          {cmS && <p className="text-lg font-bold drop-shadow">{cmS.state} cm</p>}
-          {litS && <p className="text-lg font-bold drop-shadow">{litS.state} L</p>}
-          {distS && <p className="text-sm font-semibold drop-shadow">Dist {distS.state} cm</p>}
+          <p className="text-6xl font-black drop-shadow-lg">{pct == null ? "--" : pct}%</p>
+          {cm != null && <p className="text-lg font-bold drop-shadow">{cm} cm</p>}
+          {liters != null && <p className="text-lg font-bold drop-shadow">{liters} L</p>}
+          {dist != null && <p className="text-sm font-semibold drop-shadow">Dist {dist} cm</p>}
 
           {motor && (
             <button

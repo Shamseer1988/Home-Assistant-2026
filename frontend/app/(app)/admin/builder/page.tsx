@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, Plus } from "lucide-react";
 import { createSection, fetchLayout, reorderSections } from "@/lib/admin";
 import { RoomEditor } from "@/components/admin/RoomEditor";
+import { VisibilityPanel } from "@/components/admin/VisibilityPanel";
 import { Card } from "@/components/ui/Card";
 
 export default function BuilderPage() {
@@ -120,6 +121,8 @@ export default function BuilderPage() {
           ))}
         </div>
       )}
+
+      <VisibilityPanel />
     </div>
   );
 }

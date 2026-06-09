@@ -16,18 +16,22 @@ def _ensure_columns(app):
     from sqlalchemy import inspect, text
 
     inspector = inspect(db.engine)
-    if "section_items" not in inspector.get_table_names():
-        return
-    columns = {c["name"] for c in inspector.get_columns("section_items")}
-    if "hidden" not in columns:
+    tables = set(inspector.get_table_names())
+
+    def add(table, column, ddl):
+        if table not in tables:
+            return
+        if column in {c["name"] for c in inspector.get_columns(table)}:
+            return
         try:
-            db.session.execute(
-                text("ALTER TABLE section_items ADD COLUMN hidden BOOLEAN NOT NULL DEFAULT 0")
-            )
+            db.session.execute(text(f"ALTER TABLE {table} ADD COLUMN {ddl}"))
             db.session.commit()
-            app.logger.info("Migrated: added section_items.hidden")
+            app.logger.info("Migrated: added %s.%s", table, column)
         except Exception as e:  # noqa: BLE001
-            app.logger.warning("Column migration failed: %s", e)
+            app.logger.warning("Migration %s.%s failed: %s", table, column, e)
+
+    add("section_items", "hidden", "hidden BOOLEAN NOT NULL DEFAULT 0")
+    add("sections", "hidden", "hidden BOOLEAN NOT NULL DEFAULT 0")
 
 
 def _seed_admin(app):

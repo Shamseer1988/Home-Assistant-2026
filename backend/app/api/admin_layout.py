@@ -10,6 +10,7 @@ from flask_jwt_extended import get_jwt_identity
 from ..extensions import db
 from ..models.audit import AuditLog
 from ..models.dashboard import Dashboard, EntityOverride, Section, SectionItem
+from ..models.setting import Setting
 from ..services.state_store import store
 from ..utils.auth import admin_required
 
@@ -52,7 +53,14 @@ def _name_of(entity_id):
 
 
 def _section_dict(s):
-    return {"id": s.id, "name": s.name, "icon": s.icon, "sort": s.sort, "item_count": len(s.items)}
+    return {
+        "id": s.id,
+        "name": s.name,
+        "icon": s.icon,
+        "sort": s.sort,
+        "hidden": s.hidden,
+        "item_count": len(s.items),
+    }
 
 
 def _item_dict(i):
@@ -95,7 +103,16 @@ def get_layout():
                     "override": _override_dict(ov) if ov else None,
                 }
             )
-        sections.append({"id": s.id, "name": s.name, "icon": s.icon, "sort": s.sort, "items": items})
+        sections.append(
+            {
+                "id": s.id,
+                "name": s.name,
+                "icon": s.icon,
+                "sort": s.sort,
+                "hidden": s.hidden,
+                "items": items,
+            }
+        )
     return jsonify({"id": dash.id, "name": dash.name, "sections": sections})
 
 
@@ -152,6 +169,8 @@ def update_section(section_id):
         section.name = name
     if "icon" in data:
         section.icon = data["icon"] or None
+    if "hidden" in data:
+        section.hidden = bool(data["hidden"])
     _audit("update_section", section.name)
     db.session.commit()
     return jsonify(_section_dict(section))
@@ -271,6 +290,20 @@ def delete_override(entity_id):
         db.session.delete(ov)
         db.session.commit()
     return jsonify({"ok": True})
+
+
+@bp.put("/settings/<key>")
+@admin_required
+def put_setting(key):
+    value = (request.get_json(silent=True) or {}).get("value")
+    setting = db.session.get(Setting, key)
+    if not setting:
+        setting = Setting(key=key)
+        db.session.add(setting)
+    setting.value = value
+    _audit("setting", key)
+    db.session.commit()
+    return jsonify({"key": key, "value": value})
 
 
 @bp.get("/audit")

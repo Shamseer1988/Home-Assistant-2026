@@ -7,8 +7,15 @@ Socket.IO stream, keyed by entity_id.
 from flask import Blueprint, jsonify
 
 from ..models.dashboard import Dashboard, EntityOverride
+from ..models.setting import Setting
 
 bp = Blueprint("dashboard", __name__, url_prefix="/api")
+
+
+@bp.get("/settings")
+def get_settings():
+    """Public dashboard preferences (e.g. hidden cameras / persons)."""
+    return jsonify({s.key: s.value for s in Setting.query.all()})
 
 
 @bp.get("/dashboard")
@@ -21,6 +28,8 @@ def get_dashboard():
 
     sections = []
     for section in dashboard.sections:  # ordered by relationship
+        if section.hidden:
+            continue
         items = []
         for item in section.items:  # ordered by relationship
             override = overrides.get(item.entity_id)
