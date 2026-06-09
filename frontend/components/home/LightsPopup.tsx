@@ -7,7 +7,13 @@ import { useEntityStore } from "@/store/entities";
 import { Modal } from "@/components/ui/Modal";
 import { EntityTile } from "@/components/cards/EntityTile";
 
-export function LightsPopup({ onClose }: { onClose: () => void }) {
+export function LightsPopup({
+  onClose,
+  configuredIds,
+}: {
+  onClose: () => void;
+  configuredIds?: string[];
+}) {
   const entities = useEntityStore((s) => s.entities);
   const { data } = useDashboard();
   const [room, setRoom] = useState("All");
@@ -22,9 +28,12 @@ export function LightsPopup({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const onLights = Object.values(entities).filter(
-    (e) => domainOf(e.entity_id) === "light" && e.state === "on"
-  );
+  // Admin-configured lights take priority; else all lights.
+  const lights =
+    configuredIds && configuredIds.length
+      ? configuredIds.map((id) => entities[id]).filter(Boolean)
+      : Object.values(entities).filter((e) => domainOf(e.entity_id) === "light");
+  const onLights = lights.filter((e) => e.state === "on");
   const roomsWithOn = Array.from(
     new Set(onLights.map((e) => roomOf[e.entity_id]).filter(Boolean))
   );

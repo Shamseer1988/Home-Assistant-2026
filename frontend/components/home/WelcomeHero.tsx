@@ -97,6 +97,15 @@ export function WelcomeHero() {
   const waterPct =
     waterCandidates.find((e) => /percent|level/.test(nameText(e))) || waterCandidates[0];
 
+  // Admin-configured widget entities (Builder → Widgets).
+  const securityCfgId = settings?.security_entity as string | undefined;
+  const alarmEntity = (securityCfgId && entities[securityCfgId]) || alarm;
+  const lightsCfg = (settings?.lights_entities as string[]) || [];
+  const lightsForCount = lightsCfg.length
+    ? lightsCfg.map((id) => entities[id]).filter(Boolean)
+    : lights;
+  const lightsOnCount = lightsForCount.filter((e) => e.state === "on").length;
+
   const time = now ? now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--";
   const date = now
     ? now.toLocaleDateString([], { weekday: "short", month: "short", day: "2-digit" }).toUpperCase()
@@ -126,13 +135,13 @@ export function WelcomeHero() {
       <div className="mt-4 flex flex-wrap gap-2">
         <ChipBtn
           icon={ShieldCheck}
-          label={alarm ? cap(alarm.state) : "Secure"}
+          label={alarmEntity ? cap(alarmEntity.state) : "Secure"}
           accent="text-sidra-sky"
           onClick={() => setPopup("security")}
         />
         <ChipBtn
           icon={Lightbulb}
-          label={`${lightsOn} On`}
+          label={`${lightsOnCount} On`}
           accent="text-amber-400"
           onClick={() => setPopup("lights")}
         />
@@ -152,14 +161,16 @@ export function WelcomeHero() {
 
       {popup === "security" && (
         <Modal title="Security" onClose={() => setPopup(null)}>
-          {alarm ? (
-            <AlarmPanel entity={alarm} />
+          {alarmEntity ? (
+            <AlarmPanel entity={alarmEntity} />
           ) : (
             <p className="py-6 text-center text-sm text-muted">No alarm panel found.</p>
           )}
         </Modal>
       )}
-      {popup === "lights" && <LightsPopup onClose={() => setPopup(null)} />}
+      {popup === "lights" && (
+        <LightsPopup onClose={() => setPopup(null)} configuredIds={lightsCfg} />
+      )}
       {popup === "energy" && (
         <Modal title="Energy" onClose={() => setPopup(null)}>
           <div className="grid grid-cols-2 gap-3">

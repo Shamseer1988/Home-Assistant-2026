@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlarmClock } from "lucide-react";
 import { callService } from "@/lib/api";
 import { selectAlarmClock } from "@/lib/selectors";
+import { useConfiguredEntity } from "@/lib/useWidget";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -23,7 +24,7 @@ function fmt(state: string) {
 
 export function AlarmClockCard() {
   const entities = useEntityStore((s) => s.entities);
-  const alarm = selectAlarmClock(entities);
+  const alarm = useConfiguredEntity("alarm_entity") || selectAlarmClock(entities);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("06:00");
   if (!alarm) return null;

@@ -1,6 +1,7 @@
 "use client";
 
 import { selectClimate } from "@/lib/selectors";
+import { useConfiguredEntity } from "@/lib/useWidget";
 import { useDetailStore } from "@/store/detail";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
@@ -8,7 +9,7 @@ import { RadialGauge } from "@/components/ui/RadialGauge";
 
 export function ClimateDialCard() {
   const entities = useEntityStore((s) => s.entities);
-  const climate = selectClimate(entities);
+  const climate = useConfiguredEntity("climate_entity") || selectClimate(entities);
   const open = useDetailStore((s) => s.open);
   if (!climate) return null;
 

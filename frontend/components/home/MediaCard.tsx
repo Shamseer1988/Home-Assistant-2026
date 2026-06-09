@@ -3,13 +3,14 @@
 import { Music, Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import { callService } from "@/lib/api";
 import { selectMedia } from "@/lib/selectors";
+import { useConfiguredEntity } from "@/lib/useWidget";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 import { Slider } from "@/components/ui/Slider";
 
 export function MediaCard() {
   const entities = useEntityStore((s) => s.entities);
-  const m = selectMedia(entities);
+  const m = useConfiguredEntity("media_entity") || selectMedia(entities);
   if (!m) return null;
 
   const a = m.attributes || {};

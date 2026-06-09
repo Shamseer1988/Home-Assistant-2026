@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Check, Home as HomeIcon } from "lucide-react";
 import { callService } from "@/lib/api";
 import { selectHomeMode } from "@/lib/selectors";
+import { useConfiguredEntity } from "@/lib/useWidget";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 
 export function HomeModeCard() {
   const entities = useEntityStore((s) => s.entities);
-  const mode = selectHomeMode(entities);
+  const mode = useConfiguredEntity("mode_entity") || selectHomeMode(entities);
   const [open, setOpen] = useState(false);
   if (!mode) return null;
 
