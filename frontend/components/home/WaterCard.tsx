@@ -1,0 +1,68 @@
+"use client";
+
+import { Power } from "lucide-react";
+import { callService } from "@/lib/api";
+import { domainOf } from "@/lib/ha";
+import { useEntityStore } from "@/store/entities";
+
+const text = (e: { entity_id: string; attributes?: Record<string, any> }) =>
+  `${e.entity_id} ${(e.attributes?.friendly_name || "").toLowerCase()}`.toLowerCase();
+
+export function WaterCard() {
+  const entities = useEntityStore((s) => s.entities);
+  const list = Object.values(entities);
+
+  const water = list.filter(
+    (e) => domainOf(e.entity_id) === "sensor" && /water|tank|ultrason/.test(text(e))
+  );
+  const pctS = water.find((s) => s.attributes?.unit_of_measurement === "%");
+  const cmS = water.find(
+    (s) => s.attributes?.unit_of_measurement === "cm" && /level|height/.test(text(s))
+  );
+  const litS = water.find((s) => /^l$/i.test(s.attributes?.unit_of_measurement || ""));
+  const distS = water.find((s) => /dist/.test(text(s)));
+  const motor = list.find(
+    (e) => domainOf(e.entity_id) === "switch" && /water[_ ]?motor|motor|pump/.test(text(e))
+  );
+
+  const pct = pctS ? Math.round(parseFloat(pctS.state)) : NaN;
+  const fill = Number.isNaN(pct) ? 0 : Math.min(100, Math.max(0, pct));
+  const motorOn = motor?.state === "on";
+
+  return (
+    <div className="text-center">
+      <p className="mb-3 text-sm text-muted">Water Level Monitor</p>
+      <div className="relative mx-auto h-80 w-60 overflow-hidden rounded-[28px] border border-white/10 bg-[#0b1226]">
+        <div
+          className="absolute inset-x-0 bottom-0 transition-[height] duration-500"
+          style={{ height: `${fill}%`, background: "linear-gradient(to bottom,#34d399,#38bdf8)" }}
+        />
+        <div className="relative z-10 flex h-full flex-col items-center justify-center gap-1 p-4 text-white">
+          <p className="text-6xl font-black drop-shadow-lg">
+            {Number.isNaN(pct) ? "--" : pct}%
+          </p>
+          {cmS && <p className="text-lg font-bold drop-shadow">{cmS.state} cm</p>}
+          {litS && <p className="text-lg font-bold drop-shadow">{litS.state} L</p>}
+          {distS && <p className="text-sm font-semibold drop-shadow">Dist {distS.state} cm</p>}
+
+          {motor && (
+            <button
+              type="button"
+              onClick={() =>
+                callService("switch", "toggle", { entity_id: motor.entity_id }).catch(
+                  console.error
+                )
+              }
+              className={`mt-4 flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-white backdrop-blur transition ${
+                motorOn ? "bg-emerald-500/80 hover:bg-emerald-500" : "bg-white/20 hover:bg-white/30"
+              }`}
+            >
+              <Power className="h-4 w-4" /> MOTOR {motorOn ? "ON" : "OFF"}
+            </button>
+          )}
+        </div>
+      </div>
+      {!pctS && <p className="mt-3 text-sm text-muted">No water-tank sensor found.</p>}
+    </div>
+  );
+}
