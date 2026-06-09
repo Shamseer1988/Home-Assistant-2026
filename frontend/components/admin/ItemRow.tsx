@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Eye, EyeOff, GripVertical, Pencil, Trash2, X } from "lucide-react";
 import { deleteItem, updateItem } from "@/lib/admin";
+import { CARD_LABEL } from "@/lib/cardTypes";
 import type { AdminItem, AdminSection } from "@/lib/types";
 import { IconButton } from "@/components/ui/IconButton";
 
@@ -19,7 +20,10 @@ export function ItemRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(item.label || "");
-  const display = item.label || item.live_name || item.entity_id || "";
+  const cardLabel = CARD_LABEL[item.type] || item.type;
+  const display =
+    item.label || item.live_name || item.entity_id || `${cardLabel} card`;
+  const sub = item.entity_id || (item.type !== "entity" ? `${cardLabel} card` : "");
 
   if (editing) {
     return (
@@ -68,7 +72,7 @@ export function ItemRow({
       </button>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm text-fg">{display}</p>
-        <p className="truncate text-[11px] text-muted">{item.entity_id}</p>
+        <p className="truncate text-[11px] text-muted">{sub}</p>
       </div>
       <IconButton
         title={item.hidden ? "Show on dashboard" : "Hide from dashboard"}

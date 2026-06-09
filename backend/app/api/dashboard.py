@@ -54,6 +54,7 @@ def _tree(dashboard):
                     "entity_id": item.entity_id,
                     "label": item.label or (override.friendly_name if override else None),
                     "icon": item.icon or (override.icon if override else None),
+                    "config": item.config_json,
                 }
             )
         sections.append(

@@ -73,6 +73,7 @@ def _item_dict(i):
         "icon": i.icon,
         "sort": i.sort,
         "hidden": i.hidden,
+        "config": i.config_json,
     }
 
 
@@ -316,6 +317,27 @@ def add_items(section_id):
     return jsonify([_item_dict(i) for i in created]), 201
 
 
+@bp.post("/sections/<int:section_id>/cards")
+@admin_required
+def create_card(section_id):
+    """Add a typed card (entity, glance, gauge, markdown, iframe, …)."""
+    section = _get_or_404(Section, section_id)
+    data = request.get_json(silent=True) or {}
+    item = SectionItem(
+        section_id=section.id,
+        type=(data.get("type") or "entity").strip(),
+        entity_id=data.get("entity_id") or None,
+        label=data.get("label") or None,
+        icon=data.get("icon") or None,
+        config_json=data.get("config") or None,
+        sort=_next_sort(SectionItem, section_id=section.id),
+    )
+    db.session.add(item)
+    _audit("create_card", f"{section.name}:{item.type}")
+    db.session.commit()
+    return jsonify(_item_dict(item)), 201
+
+
 @bp.patch("/items/<int:item_id>")
 @admin_required
 def update_item(item_id):
@@ -327,6 +349,10 @@ def update_item(item_id):
         item.icon = data["icon"] or None
     if "hidden" in data:
         item.hidden = bool(data["hidden"])
+    if "config" in data:
+        item.config_json = data["config"]
+    if "type" in data and data["type"]:
+        item.type = data["type"]
     if data.get("section_id"):
         target = _get_or_404(Section, data["section_id"])
         item.section_id = target.id

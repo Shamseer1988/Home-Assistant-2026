@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cardSpan } from "@/lib/cardTypes";
 import { isOn } from "@/lib/ha";
 import { roomIcon } from "@/lib/roomIcon";
 import { useDashboard } from "@/lib/useDashboard";
@@ -8,7 +9,7 @@ import type { DashSection } from "@/lib/types";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
-import { EntityTile } from "@/components/cards/EntityTile";
+import { DashCard } from "@/components/cards/DashCard";
 
 function RoomChip({ section, onOpen }: { section: DashSection; onOpen: () => void }) {
   const Icon = roomIcon(section.name);
@@ -55,11 +56,11 @@ export function RoomsCard() {
       {room && (
         <Modal title={room.name} onClose={() => setRoom(null)}>
           <div className="grid grid-cols-2 gap-3">
-            {room.items.map((it) =>
-              it.entity_id ? (
-                <EntityTile key={it.id} entityId={it.entity_id} label={it.label} />
-              ) : null
-            )}
+            {room.items.map((it) => (
+              <div key={it.id} className={cardSpan(it.type) ? "col-span-2" : ""}>
+                <DashCard item={it} />
+              </div>
+            ))}
           </div>
         </Modal>
       )}

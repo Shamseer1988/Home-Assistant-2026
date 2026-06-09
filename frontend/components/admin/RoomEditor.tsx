@@ -31,13 +31,13 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { addItems, deleteSection, reorderItems, updateSection } from "@/lib/admin";
+import { deleteSection, reorderItems, updateSection } from "@/lib/admin";
 import { roomIcon } from "@/lib/roomIcon";
 import type { AdminItem, AdminSection } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { ItemRow } from "./ItemRow";
-import { EntityPickerModal } from "./EntityPickerModal";
+import { CardPicker } from "./CardPicker";
 
 function SortableItemRow({
   item,
@@ -80,7 +80,6 @@ export function RoomEditor({
   const [open, setOpen] = useState(true);
   const [name, setName] = useState(section.name);
   const [picker, setPicker] = useState(false);
-  const [pickerBusy, setPickerBusy] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -106,13 +105,6 @@ export function RoomEditor({
         : old
     );
     run(() => reorderItems(section.id, newIds));
-  };
-
-  const onAdd = async (ids: string[]) => {
-    setPickerBusy(true);
-    await run(() => addItems(section.id, ids));
-    setPickerBusy(false);
-    setPicker(false);
   };
 
   const existing = new Set(section.items.map((i) => i.entity_id).filter(Boolean) as string[]);
@@ -225,17 +217,18 @@ export function RoomEditor({
             onClick={() => setPicker(true)}
             className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-line/15 py-2 text-sm text-muted transition hover:bg-fg/[0.04]"
           >
-            <Plus className="h-4 w-4" /> Add entities
+            <Plus className="h-4 w-4" /> Add card
           </button>
         </>
       )}
 
       {picker && (
-        <EntityPickerModal
+        <CardPicker
+          sectionId={section.id}
+          sectionName={section.name}
           existing={existing}
+          run={run}
           onClose={() => setPicker(false)}
-          onAdd={onAdd}
-          busy={pickerBusy}
         />
       )}
     </Card>

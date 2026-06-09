@@ -1,10 +1,11 @@
 "use client";
 
+import { cardSpan } from "@/lib/cardTypes";
 import { isOn } from "@/lib/ha";
 import { roomIcon } from "@/lib/roomIcon";
 import type { DashSection } from "@/lib/types";
 import { useEntityStore } from "@/store/entities";
-import { EntityTile } from "./EntityTile";
+import { DashCard } from "./DashCard";
 
 export function RoomSection({ section }: { section: DashSection }) {
   const Icon = roomIcon(section.name);
@@ -33,11 +34,11 @@ export function RoomSection({ section }: { section: DashSection }) {
         </span>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {section.items.map((it) =>
-          it.entity_id ? (
-            <EntityTile key={it.id} entityId={it.entity_id} label={it.label} />
-          ) : null
-        )}
+        {section.items.map((it) => (
+          <div key={it.id} className={cardSpan(it.type)}>
+            <DashCard item={it} />
+          </div>
+        ))}
       </div>
     </section>
   );

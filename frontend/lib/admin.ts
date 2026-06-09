@@ -44,6 +44,16 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
 // Sections (rooms)
 export const createSection = (name: string, dashboardId?: number) =>
   send("POST", "/api/admin/sections", { name, dashboard_id: dashboardId });
+
+export interface NewCard {
+  type: string;
+  entity_id?: string;
+  label?: string;
+  icon?: string;
+  config?: Record<string, unknown>;
+}
+export const createCard = (sectionId: number, card: NewCard) =>
+  send("POST", `/api/admin/sections/${sectionId}/cards`, card);
 export const updateSection = (
   id: number,
   data: { name?: string; icon?: string | null; hidden?: boolean }

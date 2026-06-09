@@ -19,6 +19,7 @@ export interface DashItem {
   entity_id: string | null;
   label: string | null;
   icon: string | null;
+  config?: Record<string, any> | null;
 }
 
 export interface DashSection {
@@ -52,6 +53,7 @@ export interface AdminItem {
   icon: string | null;
   sort: number;
   hidden: boolean;
+  config?: Record<string, any> | null;
   live_name: string | null;
   override: AdminOverride | null;
 }
