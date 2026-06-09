@@ -80,12 +80,16 @@ export function WelcomeHero() {
       Number.isFinite(parseFloat(e.state))
   );
   const power = powerSensors[0];
-  const waterPct = list.find(
+  const waterCandidates = list.filter(
     (e) =>
       domainOf(e.entity_id) === "sensor" &&
       /water|tank/.test(nameText(e)) &&
-      e.attributes?.unit_of_measurement === "%"
+      e.attributes?.unit_of_measurement === "%" &&
+      e.attributes?.device_class !== "battery" &&
+      !/battery|signal|rssi|linkquality/.test(nameText(e))
   );
+  const waterPct =
+    waterCandidates.find((e) => /percent|level/.test(nameText(e))) || waterCandidates[0];
 
   const time = now ? now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--";
   const date = now

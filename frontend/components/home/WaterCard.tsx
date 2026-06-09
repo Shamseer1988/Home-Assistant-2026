@@ -12,15 +12,24 @@ export function WaterCard() {
   const entities = useEntityStore((s) => s.entities);
   const list = Object.values(entities);
 
+  // Water sensors, excluding device diagnostics (battery / signal / linkquality)
+  // which are also reported in % and would otherwise be mistaken for the level.
   const water = list.filter(
-    (e) => domainOf(e.entity_id) === "sensor" && /water|tank|ultrason/.test(text(e))
+    (e) =>
+      domainOf(e.entity_id) === "sensor" &&
+      /water|tank|ultrason/.test(text(e)) &&
+      e.attributes?.device_class !== "battery" &&
+      !/battery|signal|rssi|linkquality|wifi/.test(text(e))
   );
-  const pctS = water.find((s) => s.attributes?.unit_of_measurement === "%");
+  const unit = (s: any) => (s.attributes?.unit_of_measurement || "").toLowerCase();
+  const pctS =
+    water.find((s) => unit(s) === "%" && /percent|level/.test(text(s))) ||
+    water.find((s) => unit(s) === "%");
   const cmS = water.find(
-    (s) => s.attributes?.unit_of_measurement === "cm" && /level|height/.test(text(s))
+    (s) => unit(s) === "cm" && /level|height/.test(text(s)) && !/dist/.test(text(s))
   );
-  const litS = water.find((s) => /^l$/i.test(s.attributes?.unit_of_measurement || ""));
-  const distS = water.find((s) => /dist/.test(text(s)));
+  const litS = water.find((s) => /^l$|liter|litre/.test(unit(s)));
+  const distS = water.find((s) => /dist/.test(text(s)) && unit(s) === "cm");
   const motor = list.find(
     (e) => domainOf(e.entity_id) === "switch" && /water[_ ]?motor|motor|pump/.test(text(e))
   );
