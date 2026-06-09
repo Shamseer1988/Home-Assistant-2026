@@ -3,6 +3,7 @@
 import { Power } from "lucide-react";
 import { callService } from "@/lib/api";
 import { domainOf } from "@/lib/ha";
+import { useSettings } from "@/lib/useSettings";
 import { useEntityStore } from "@/store/entities";
 
 const text = (e: { entity_id: string; attributes?: Record<string, any> }) =>
@@ -11,6 +12,11 @@ const text = (e: { entity_id: string; attributes?: Record<string, any> }) =>
 export function WaterCard() {
   const entities = useEntityStore((s) => s.entities);
   const list = Object.values(entities);
+
+  // Admin-configured entities (Builder → Widgets) take priority over auto-detection.
+  const { data: settings } = useSettings();
+  const cfg = (settings?.water_entities as Record<string, string>) || {};
+  const byId = (id?: string) => (id && entities[id] ? entities[id] : undefined);
 
   // Water sensors, excluding device diagnostics (battery / signal / linkquality)
   // which are also reported in % and would otherwise be mistaken for the level.
@@ -23,16 +29,19 @@ export function WaterCard() {
   );
   const unit = (s: any) => (s.attributes?.unit_of_measurement || "").toLowerCase();
   const pctS =
+    byId(cfg.level) ||
     water.find((s) => unit(s) === "%" && /percent|level/.test(text(s))) ||
     water.find((s) => unit(s) === "%");
-  const cmS = water.find(
-    (s) => unit(s) === "cm" && /level|height/.test(text(s)) && !/dist/.test(text(s))
-  );
-  const litS = water.find((s) => /^l$|liter|litre/.test(unit(s)));
-  const distS = water.find((s) => /dist/.test(text(s)) && unit(s) === "cm");
-  const motor = list.find(
-    (e) => domainOf(e.entity_id) === "switch" && /water[_ ]?motor|motor|pump/.test(text(e))
-  );
+  const cmS =
+    byId(cfg.cm) ||
+    water.find((s) => unit(s) === "cm" && /level|height/.test(text(s)) && !/dist/.test(text(s)));
+  const litS = byId(cfg.liters) || water.find((s) => /^l$|liter|litre/.test(unit(s)));
+  const distS = byId(cfg.distance) || water.find((s) => /dist/.test(text(s)) && unit(s) === "cm");
+  const motor =
+    byId(cfg.motor) ||
+    list.find(
+      (e) => domainOf(e.entity_id) === "switch" && /water[_ ]?motor|motor|pump/.test(text(e))
+    );
 
   const r = (s?: { state: string }) =>
     s && Number.isFinite(parseFloat(s.state)) ? Math.round(parseFloat(s.state)) : null;

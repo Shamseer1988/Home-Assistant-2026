@@ -1,47 +1,111 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Check, Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  addItems,
-  deleteSection,
-  reorderItems,
-  updateSection,
-} from "@/lib/admin";
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
+import { addItems, deleteSection, reorderItems, updateSection } from "@/lib/admin";
 import { roomIcon } from "@/lib/roomIcon";
-import type { AdminSection } from "@/lib/types";
+import type { AdminItem, AdminSection } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { ItemRow } from "./ItemRow";
 import { EntityPickerModal } from "./EntityPickerModal";
 
+function SortableItemRow({
+  item,
+  sections,
+  run,
+}: {
+  item: AdminItem;
+  sections: AdminSection[];
+  run: (fn: () => Promise<unknown>) => Promise<void>;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: String(item.id),
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      <ItemRow item={item} sections={sections} run={run} dragHandle={{ ...attributes, ...listeners }} />
+    </div>
+  );
+}
+
 export function RoomEditor({
   section,
   allSections,
-  index,
-  total,
-  onMoveRoom,
+  dragHandle,
   run,
 }: {
   section: AdminSection;
   allSections: AdminSection[];
-  index: number;
-  total: number;
-  onMoveRoom: (dir: number) => void;
+  dragHandle?: Record<string, unknown>;
   run: (fn: () => Promise<unknown>) => Promise<void>;
 }) {
   const Icon = roomIcon(section.name);
+  const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [open, setOpen] = useState(true);
   const [name, setName] = useState(section.name);
   const [picker, setPicker] = useState(false);
   const [pickerBusy, setPickerBusy] = useState(false);
 
-  const moveItem = (idx: number, dir: number) => {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const onItemDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
     const ids = section.items.map((i) => i.id);
-    const j = idx + dir;
-    if (j < 0 || j >= ids.length) return;
-    [ids[idx], ids[j]] = [ids[j], ids[idx]];
-    run(() => reorderItems(section.id, ids));
+    const oldI = ids.indexOf(Number(active.id));
+    const newI = ids.indexOf(Number(over.id));
+    if (oldI < 0 || newI < 0) return;
+    const newIds = arrayMove(ids, oldI, newI);
+    qc.setQueryData(["admin", "layout"], (old: any) =>
+      old
+        ? {
+            ...old,
+            sections: old.sections.map((s: any) =>
+              s.id === section.id ? { ...s, items: arrayMove(s.items, oldI, newI) } : s
+            ),
+          }
+        : old
+    );
+    run(() => reorderItems(section.id, newIds));
   };
 
   const onAdd = async (ids: string[]) => {
@@ -51,13 +115,19 @@ export function RoomEditor({
     setPicker(false);
   };
 
-  const existing = new Set(
-    section.items.map((i) => i.entity_id).filter(Boolean) as string[]
-  );
+  const existing = new Set(section.items.map((i) => i.entity_id).filter(Boolean) as string[]);
 
   return (
     <Card className={`p-4 ${section.hidden ? "opacity-60" : ""}`}>
       <div className="mb-3 flex items-center gap-2">
+        <button
+          {...(dragHandle || {})}
+          type="button"
+          title="Drag to reorder room"
+          className="cursor-grab touch-none rounded p-1 text-muted hover:text-fg"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-fg/5">
           <Icon className="h-4 w-4 text-sidra-sky" />
         </span>
@@ -90,12 +160,19 @@ export function RoomEditor({
           </div>
         ) : (
           <>
-            <h3 className="flex-1 truncate font-semibold text-fg">
-              {section.name}
-            </h3>
-            <span className="mr-1 text-xs text-muted">
-              {section.items.length}
-            </span>
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="flex flex-1 items-center gap-1 truncate text-left"
+            >
+              {open ? (
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted" />
+              ) : (
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
+              )}
+              <span className="truncate font-semibold text-fg">{section.name}</span>
+            </button>
+            <span className="mr-1 text-xs text-muted">{section.items.length}</span>
             <IconButton
               title={section.hidden ? "Show room on dashboard" : "Hide room from dashboard"}
               onClick={() => run(() => updateSection(section.id, { hidden: !section.hidden }))}
@@ -106,16 +183,6 @@ export function RoomEditor({
                 <Eye className="h-4 w-4 text-emerald-400" />
               )}
             </IconButton>
-            <IconButton title="Move up" disabled={index === 0} onClick={() => onMoveRoom(-1)}>
-              <ArrowUp className="h-4 w-4" />
-            </IconButton>
-            <IconButton
-              title="Move down"
-              disabled={index === total - 1}
-              onClick={() => onMoveRoom(1)}
-            >
-              <ArrowDown className="h-4 w-4" />
-            </IconButton>
             <IconButton title="Rename room" onClick={() => setEditing(true)}>
               <Pencil className="h-4 w-4" />
             </IconButton>
@@ -123,9 +190,7 @@ export function RoomEditor({
               title="Delete room"
               onClick={() => {
                 if (
-                  window.confirm(
-                    `Delete “${section.name}” and its ${section.items.length} tiles?`
-                  )
+                  window.confirm(`Delete “${section.name}” and its ${section.items.length} tiles?`)
                 ) {
                   run(() => deleteSection(section.id));
                 }
@@ -137,30 +202,33 @@ export function RoomEditor({
         )}
       </div>
 
-      <div className="space-y-1.5">
-        {section.items.map((it, i) => (
-          <ItemRow
-            key={it.id}
-            item={it}
-            sections={allSections}
-            index={i}
-            total={section.items.length}
-            onMove={(dir) => moveItem(i, dir)}
-            run={run}
-          />
-        ))}
-        {section.items.length === 0 && (
-          <p className="px-1 py-2 text-sm text-muted">No tiles yet.</p>
-        )}
-      </div>
+      {open && (
+        <>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onItemDragEnd}>
+            <SortableContext
+              items={section.items.map((i) => String(i.id))}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-1.5">
+                {section.items.map((it) => (
+                  <SortableItemRow key={it.id} item={it} sections={allSections} run={run} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+          {section.items.length === 0 && (
+            <p className="px-1 py-2 text-sm text-muted">No tiles yet.</p>
+          )}
 
-      <button
-        type="button"
-        onClick={() => setPicker(true)}
-        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-line/15 py-2 text-sm text-muted transition hover:bg-fg/[0.04]"
-      >
-        <Plus className="h-4 w-4" /> Add entities
-      </button>
+          <button
+            type="button"
+            onClick={() => setPicker(true)}
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-line/15 py-2 text-sm text-muted transition hover:bg-fg/[0.04]"
+          >
+            <Plus className="h-4 w-4" /> Add entities
+          </button>
+        </>
+      )}
 
       {picker && (
         <EntityPickerModal

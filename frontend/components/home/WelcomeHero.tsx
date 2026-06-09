@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { domainOf } from "@/lib/ha";
 import { useAuth } from "@/lib/useAuth";
+import { useSettings } from "@/lib/useSettings";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -64,6 +65,7 @@ export function WelcomeHero() {
   }, []);
 
   const { user } = useAuth();
+  const { data: settings } = useSettings();
   const entities = useEntityStore((s) => s.entities);
   const list = Object.values(entities);
   const [popup, setPopup] = useState<Popup>(null);
@@ -80,6 +82,10 @@ export function WelcomeHero() {
       Number.isFinite(parseFloat(e.state))
   );
   const power = powerSensors[0];
+  const energyIds = (settings?.energy_entities as string[]) || [];
+  const energyEntities = energyIds.length
+    ? energyIds.map((id) => entities[id]).filter(Boolean)
+    : powerSensors;
   const waterCandidates = list.filter(
     (e) =>
       domainOf(e.entity_id) === "sensor" &&
@@ -157,11 +163,11 @@ export function WelcomeHero() {
       {popup === "energy" && (
         <Modal title="Energy" onClose={() => setPopup(null)}>
           <div className="grid grid-cols-2 gap-3">
-            {powerSensors.map((e) => (
+            {energyEntities.map((e) => (
               <StatTile key={e.entity_id} entity={e} />
             ))}
-            {powerSensors.length === 0 && (
-              <p className="col-span-2 py-6 text-center text-sm text-muted">No power sensors.</p>
+            {energyEntities.length === 0 && (
+              <p className="col-span-2 py-6 text-center text-sm text-muted">No energy entities.</p>
             )}
           </div>
         </Modal>

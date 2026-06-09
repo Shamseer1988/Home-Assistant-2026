@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Check, Eye, EyeOff, Pencil, Trash2, X } from "lucide-react";
+import { Check, Eye, EyeOff, GripVertical, Pencil, Trash2, X } from "lucide-react";
 import { deleteItem, updateItem } from "@/lib/admin";
 import type { AdminItem, AdminSection } from "@/lib/types";
 import { IconButton } from "@/components/ui/IconButton";
@@ -9,17 +9,13 @@ import { IconButton } from "@/components/ui/IconButton";
 export function ItemRow({
   item,
   sections,
-  index,
-  total,
-  onMove,
   run,
+  dragHandle,
 }: {
   item: AdminItem;
   sections: AdminSection[];
-  index: number;
-  total: number;
-  onMove: (dir: number) => void;
   run: (fn: () => Promise<unknown>) => Promise<void>;
+  dragHandle?: Record<string, unknown>;
 }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(item.label || "");
@@ -58,10 +54,18 @@ export function ItemRow({
 
   return (
     <div
-      className={`flex items-center gap-1 rounded-xl border border-line/10 bg-fg/[0.03] px-2.5 py-1.5 ${
+      className={`flex items-center gap-1 rounded-xl border border-line/10 bg-fg/[0.03] px-2 py-1.5 ${
         item.hidden ? "opacity-50" : ""
       }`}
     >
+      <button
+        {...(dragHandle || {})}
+        type="button"
+        title="Drag to reorder"
+        className="cursor-grab touch-none rounded p-1 text-muted hover:text-fg"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm text-fg">{display}</p>
         <p className="truncate text-[11px] text-muted">{item.entity_id}</p>
@@ -75,16 +79,6 @@ export function ItemRow({
         ) : (
           <Eye className="h-4 w-4 text-emerald-400" />
         )}
-      </IconButton>
-      <IconButton title="Move up" disabled={index === 0} onClick={() => onMove(-1)}>
-        <ArrowUp className="h-4 w-4" />
-      </IconButton>
-      <IconButton
-        title="Move down"
-        disabled={index === total - 1}
-        onClick={() => onMove(1)}
-      >
-        <ArrowDown className="h-4 w-4" />
       </IconButton>
       <select
         title="Move to room"

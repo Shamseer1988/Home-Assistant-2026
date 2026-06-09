@@ -18,6 +18,12 @@ const FILTERS: { k: string; label: string }[] = [
   { k: "fan", label: "Fans" },
   { k: "sensor", label: "Sensors" },
   { k: "binary_sensor", label: "Binary" },
+  { k: "climate", label: "Climate" },
+  { k: "cover", label: "Covers" },
+  { k: "media_player", label: "Media" },
+  { k: "lock", label: "Locks" },
+  { k: "camera", label: "Cameras" },
+  { k: "scene", label: "Scenes" },
 ];
 
 function matchFilter(e: { domain: string; state: string }, f: string) {
