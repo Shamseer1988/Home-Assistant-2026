@@ -9,7 +9,7 @@ import type { DashSection } from "@/lib/types";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
-import { DashCard } from "@/components/cards/DashCard";
+import { ConditionalCard } from "@/components/cards/ConditionalCard";
 
 function RoomChip({ section, onOpen }: { section: DashSection; onOpen: () => void }) {
   const Icon = roomIcon(section.name);
@@ -57,9 +57,11 @@ export function RoomsCard() {
         <Modal title={room.name} onClose={() => setRoom(null)}>
           <div className="grid grid-cols-2 gap-3">
             {room.items.map((it) => (
-              <div key={it.id} className={cardSpan(it.type, it.config) ? "col-span-2" : ""}>
-                <DashCard item={it} />
-              </div>
+              <ConditionalCard
+                key={it.id}
+                item={it}
+                className={cardSpan(it.type, it.config) ? "col-span-2" : ""}
+              />
             ))}
           </div>
         </Modal>

@@ -19,7 +19,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { BadgeCheck, Check, Copy, GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { BadgeCheck, Check, Copy, Eye, GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   createSection,
   createView,
@@ -61,6 +61,11 @@ function SortableCard({ item, run }: { item: AdminItem; run: Run }) {
         <DashCard item={item} />
       </div>
       <div className="absolute inset-0 rounded-3xl ring-2 ring-sidra-sky/30" />
+      {(item.config?.conditions?.length ?? 0) > 0 && (
+        <span className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-md bg-panel/90 px-1.5 py-0.5 text-[10px] font-medium text-muted shadow backdrop-blur">
+          <Eye className="h-3 w-3" /> Conditional
+        </span>
+      )}
       <div className="absolute right-2 top-2 z-10 flex gap-1">
         <button
           {...attributes}

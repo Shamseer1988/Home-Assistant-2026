@@ -6,7 +6,7 @@ import { isOn } from "@/lib/ha";
 import { roomIcon } from "@/lib/roomIcon";
 import type { DashSection } from "@/lib/types";
 import { useEntityStore } from "@/store/entities";
-import { DashCard } from "./DashCard";
+import { ConditionalCard } from "./ConditionalCard";
 
 export function RoomSection({ section, index = 0 }: { section: DashSection; index?: number }) {
   const Icon = roomIcon(section.name);
@@ -40,9 +40,7 @@ export function RoomSection({ section, index = 0 }: { section: DashSection; inde
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {section.items.map((it) => (
-          <div key={it.id} className={cardSpan(it.type, it.config)}>
-            <DashCard item={it} />
-          </div>
+          <ConditionalCard key={it.id} item={it} className={cardSpan(it.type, it.config)} />
         ))}
       </div>
     </motion.section>

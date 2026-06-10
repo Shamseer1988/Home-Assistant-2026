@@ -2,9 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Loader2, Search } from "lucide-react";
+import { Check, Loader2, Plus, Search, X } from "lucide-react";
 import { fetchPickerEntities, updateItem } from "@/lib/admin";
 import { CARD_COLORS, CARD_TYPES, WIDTH_OPTIONS } from "@/lib/cardTypes";
+import {
+  CONDITION_OPS,
+  normalizeConditions,
+  opNeedsValue,
+  type Condition,
+} from "@/lib/conditions";
+import type { DashItem } from "@/lib/types";
+import { DashCard } from "@/components/cards/DashCard";
 import { Modal } from "@/components/ui/Modal";
 
 export interface EditableCard {
@@ -37,6 +45,7 @@ export function CardEditor({
   const [service, setService] = useState(cfg.service || "");
   const [cols, setCols] = useState<string>(cfg.cols != null ? String(cfg.cols) : "auto");
   const [color, setColor] = useState<string>(cfg.color || "");
+  const [conditions, setConditions] = useState<Condition[]>(normalizeConditions(cfg.conditions));
 
   const filtered = useMemo(() => {
     const t = q.toLowerCase().trim();
@@ -45,18 +54,27 @@ export function CardEditor({
       .slice(0, 150);
   }, [all, q]);
 
-  const save = async () => {
+  const addCond = () => setConditions((p) => [...p, { entity: "", op: "on" }]);
+  const updateCond = (i: number, patch: Partial<Condition>) =>
+    setConditions((p) => p.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  const removeCond = (i: number) => setConditions((p) => p.filter((_, j) => j !== i));
+
+  // The patch we'd save — also feeds the live preview, so it stays in sync.
+  const patch = useMemo(() => {
     const config: any = { ...cfg };
     delete config.entity_ids;
     if (cols === "auto") delete config.cols;
     else config.cols = cols;
     if (color) config.color = color;
     else delete config.color;
+    const conds = conditions.filter((c) => c.entity);
+    if (conds.length) config.conditions = conds;
+    else delete config.conditions;
 
-    const patch: any = { config };
+    const p: any = { config };
     if (def.needs === "entity") {
-      patch.entity_id = entityId || null;
-      patch.label = label || null;
+      p.entity_id = entityId || null;
+      p.label = label || null;
       if (def.key === "button") {
         if (service) config.service = service;
         else delete config.service;
@@ -71,8 +89,21 @@ export function CardEditor({
       config.url = url;
       config.title = label || undefined;
     } else {
-      patch.label = label || null;
+      p.label = label || null;
     }
+    return p;
+  }, [cfg, cols, color, conditions, def, entityId, label, service, entityIds, content, url]);
+
+  const previewItem: DashItem = {
+    id: item.id,
+    type: item.type,
+    entity_id: def.needs === "entity" ? entityId || null : null,
+    label: label || null,
+    icon: null,
+    config: patch.config,
+  };
+
+  const save = async () => {
     setBusy(true);
     await run(() => updateItem(item.id, patch));
     setBusy(false);
@@ -107,6 +138,13 @@ export function CardEditor({
       }
     >
       <div className="space-y-3">
+        <div className="rounded-2xl border border-line/10 bg-fg/[0.02] p-3">
+          <p className="mb-2 text-xs font-medium text-muted">Preview</p>
+          <div className="pointer-events-none">
+            <DashCard item={previewItem} />
+          </div>
+        </div>
+
         {def.needs !== "text" && def.needs !== "url" && (
           <input
             value={label}
@@ -230,6 +268,70 @@ export function CardEditor({
               );
             })}
           </div>
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-muted">Visibility</p>
+          {conditions.length === 0 && (
+            <p className="mb-2 text-xs text-muted">
+              Always shown. Add a condition to show this card only when an entity is in a given
+              state.
+            </p>
+          )}
+          <div className="space-y-2">
+            {conditions.map((c, i) => (
+              <div key={i} className="flex flex-wrap items-center gap-1.5">
+                <input
+                  list="cond-entities"
+                  value={c.entity}
+                  onChange={(e) => updateCond(i, { entity: e.target.value })}
+                  placeholder="entity_id"
+                  className="min-w-0 flex-1 rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+                />
+                <select
+                  value={c.op}
+                  onChange={(e) => updateCond(i, { op: e.target.value })}
+                  className="rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+                >
+                  {CONDITION_OPS.map((o) => (
+                    <option key={o.value} value={o.value} className="bg-panel">
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                {opNeedsValue(c.op) && (
+                  <input
+                    value={c.value || ""}
+                    onChange={(e) => updateCond(i, { value: e.target.value })}
+                    placeholder="value"
+                    className="w-20 rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeCond(i)}
+                  title="Remove condition"
+                  className="rounded p-1 text-rose-400 hover:bg-fg/10"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addCond}
+            className="mt-2 flex items-center gap-1 rounded-lg border border-dashed border-line/15 px-2.5 py-1 text-xs text-muted transition hover:bg-fg/5"
+          >
+            <Plus className="h-3 w-3" /> Add condition
+          </button>
+          <datalist id="cond-entities">
+            {(all || []).map((e) => (
+              <option key={e.entity_id} value={e.entity_id}>
+                {e.name}
+              </option>
+            ))}
+          </datalist>
         </div>
       </div>
     </Modal>
