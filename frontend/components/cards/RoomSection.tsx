@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { cardSpan } from "@/lib/cardTypes";
 import { isOn } from "@/lib/ha";
 import { roomIcon } from "@/lib/roomIcon";
@@ -7,7 +8,7 @@ import type { DashSection } from "@/lib/types";
 import { useEntityStore } from "@/store/entities";
 import { DashCard } from "./DashCard";
 
-export function RoomSection({ section }: { section: DashSection }) {
+export function RoomSection({ section, index = 0 }: { section: DashSection; index?: number }) {
   const Icon = roomIcon(section.name);
 
   // Selector returns a number, so this header only re-renders when the count
@@ -22,7 +23,11 @@ export function RoomSection({ section }: { section: DashSection }) {
   if (section.items.length === 0) return null;
 
   return (
-    <section>
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut", delay: Math.min(index * 0.06, 0.36) }}
+    >
       <div className="mb-3 flex items-center gap-3">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-fg/5">
           <Icon className="h-4 w-4 text-sidra-sky" />
@@ -40,6 +45,6 @@ export function RoomSection({ section }: { section: DashSection }) {
           </div>
         ))}
       </div>
-    </section>
+    </motion.section>
   );
 }

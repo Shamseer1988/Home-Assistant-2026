@@ -298,6 +298,114 @@ def reorder_dashboards():
     return jsonify({"ok": True})
 
 
+# ----------------------------------------------------- import / export (JSON)
+# Portable layout document: no database ids, so it can be moved between
+# installs. Bump the version if the shape ever changes incompatibly.
+EXPORT_VERSION = 1
+
+
+def _export_dashboard(dash):
+    views = []
+    for v in sorted(dash.views, key=lambda x: x.sort):
+        sections = []
+        for s in sorted(v.sections, key=lambda x: x.sort):
+            sections.append(
+                {
+                    "name": s.name,
+                    "icon": s.icon,
+                    "hidden": s.hidden,
+                    "items": [
+                        {
+                            "type": it.type,
+                            "entity_id": it.entity_id,
+                            "label": it.label,
+                            "icon": it.icon,
+                            "hidden": it.hidden,
+                            "config": it.config_json,
+                        }
+                        for it in sorted(s.items, key=lambda x: x.sort)
+                    ],
+                }
+            )
+        views.append({"name": v.name, "icon": v.icon, "sections": sections})
+    return {"sidra_dashboard": EXPORT_VERSION, "name": dash.name, "views": views}
+
+
+@bp.get("/dashboards/<int:dashboard_id>/export")
+@admin_required
+def export_dashboard(dashboard_id):
+    dash = _get_or_404(Dashboard, dashboard_id)
+    return jsonify(_export_dashboard(dash))
+
+
+@bp.post("/dashboards/import")
+@admin_required
+def import_dashboard():
+    """Create a brand-new dashboard from an exported JSON document."""
+    doc = request.get_json(silent=True) or {}
+    if doc.get("sidra_dashboard") != EXPORT_VERSION:
+        return jsonify({"error": "unrecognised or unsupported dashboard file"}), 400
+    views = doc.get("views")
+    if not isinstance(views, list):
+        return jsonify({"error": "invalid dashboard file: missing views"}), 400
+
+    name = (doc.get("override_name") or doc.get("name") or "Imported").strip() or "Imported"
+    dash = Dashboard(
+        name=name, slug=_slugify(name), is_default=False, sort=_next_sort(Dashboard)
+    )
+    db.session.add(dash)
+    db.session.flush()
+
+    made_views = 0
+    for vi, v in enumerate(views):
+        if not isinstance(v, dict):
+            continue
+        view = View(
+            dashboard_id=dash.id,
+            name=(v.get("name") or "Home").strip() or "Home",
+            icon=v.get("icon") or None,
+            sort=vi,
+        )
+        db.session.add(view)
+        db.session.flush()
+        made_views += 1
+        for si, s in enumerate(v.get("sections") or []):
+            if not isinstance(s, dict):
+                continue
+            section = Section(
+                dashboard_id=dash.id,
+                view_id=view.id,
+                name=(s.get("name") or "Room").strip() or "Room",
+                icon=s.get("icon") or None,
+                hidden=bool(s.get("hidden")),
+                sort=si,
+            )
+            db.session.add(section)
+            db.session.flush()
+            for ii, it in enumerate(s.get("items") or []):
+                if not isinstance(it, dict):
+                    continue
+                db.session.add(
+                    SectionItem(
+                        section_id=section.id,
+                        type=(it.get("type") or "entity").strip() or "entity",
+                        entity_id=it.get("entity_id") or None,
+                        label=it.get("label") or None,
+                        icon=it.get("icon") or None,
+                        hidden=bool(it.get("hidden")),
+                        config_json=it.get("config") or None,
+                        sort=ii,
+                    )
+                )
+
+    if made_views == 0:  # a dashboard must have at least one view
+        db.session.add(View(dashboard_id=dash.id, name="Home", sort=0))
+
+    _audit("import_dashboard", name)
+    db.session.commit()
+    return jsonify(_dashboard_dict(dash)), 201
+
+
 @bp.get("/entities")
 @admin_required
 def list_entities():

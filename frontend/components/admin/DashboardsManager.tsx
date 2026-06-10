@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Eye, EyeOff, Pencil, Plus, Star, Trash2, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { Check, Download, Eye, EyeOff, Pencil, Plus, Star, Trash2, Upload, X } from "lucide-react";
 import {
   type DashboardMeta,
   createDashboard,
   deleteDashboard,
+  exportDashboard,
+  importDashboard,
   updateDashboard,
 } from "@/lib/admin";
 import { Card } from "@/components/ui/Card";
@@ -25,12 +27,41 @@ export function DashboardsManager({
   const [newName, setNewName] = useState("");
   const [editId, setEditId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const add = async () => {
     const n = newName.trim();
     if (!n) return;
     await run(() => createDashboard(n));
     setNewName("");
+  };
+
+  const doExport = (d: DashboardMeta) =>
+    run(async () => {
+      const doc = await exportDashboard(d.id);
+      const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${d.slug || "dashboard"}.sidra.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+  const onImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // let the same file be picked again later
+    if (!file) return;
+    run(async () => {
+      const text = await file.text();
+      let doc: unknown;
+      try {
+        doc = JSON.parse(text);
+      } catch {
+        throw new Error("That file isn’t valid JSON.");
+      }
+      await importDashboard(doc);
+    });
   };
 
   return (
@@ -106,6 +137,9 @@ export function DashboardsManager({
                   >
                     <Pencil className="h-4 w-4" />
                   </IconButton>
+                  <IconButton title="Export as JSON" onClick={() => doExport(d)}>
+                    <Download className="h-4 w-4" />
+                  </IconButton>
                   {!d.is_default && (
                     <IconButton
                       title="Delete dashboard"
@@ -135,12 +169,27 @@ export function DashboardsManager({
         />
         <button
           type="button"
+          onClick={() => fileRef.current?.click()}
+          title="Import a dashboard from a .json file"
+          className="flex items-center gap-1.5 rounded-xl border border-line/10 bg-fg/[0.04] px-3 py-2 text-sm font-medium text-muted transition hover:bg-fg/[0.08] hover:text-fg"
+        >
+          <Upload className="h-4 w-4" /> Import
+        </button>
+        <button
+          type="button"
           onClick={add}
           disabled={!newName.trim()}
           className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-sidra-blue to-sidra-sky px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
         >
           <Plus className="h-4 w-4" /> Add
         </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={onImportFile}
+          className="hidden"
+        />
       </div>
     </Card>
   );

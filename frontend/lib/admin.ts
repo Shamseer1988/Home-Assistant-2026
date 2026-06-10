@@ -44,6 +44,16 @@ export const updateDashboard = (
 export const deleteDashboard = (id: number) =>
   send("DELETE", `/api/admin/dashboards/${id}`);
 
+export interface DashboardExport {
+  sidra_dashboard: number;
+  name: string;
+  views: unknown[];
+}
+export const exportDashboard = (id: number) =>
+  send<DashboardExport>("GET", `/api/admin/dashboards/${id}/export`);
+export const importDashboard = (doc: unknown) =>
+  send<DashboardMeta>("POST", "/api/admin/dashboards/import", doc);
+
 async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method,

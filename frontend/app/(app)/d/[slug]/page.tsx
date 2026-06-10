@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, Pencil } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import { fetchDashboardBySlug } from "@/lib/dashboards";
@@ -11,6 +12,7 @@ import type { HAEntity } from "@/lib/types";
 import { useEntityStore } from "@/store/entities";
 import { RoomSection } from "@/components/cards/RoomSection";
 import { EditableDashboard } from "@/components/dashboard/EditableDashboard";
+import { MobileViewSwitcher } from "@/components/dashboard/MobileViewSwitcher";
 import { Empty } from "@/components/special/common";
 
 export default function DashboardSlugPage() {
@@ -77,7 +79,7 @@ export default function DashboardSlugPage() {
       ) : (
         <>
           {views.length > 1 && (
-            <div className="flex flex-wrap gap-2 border-b border-line/10 pb-2">
+            <div className="hidden flex-wrap gap-2 border-b border-line/10 pb-2 md:flex">
               {views.map((v) => {
                 const active = v.id === activeId;
                 return (
@@ -97,10 +99,27 @@ export default function DashboardSlugPage() {
               })}
             </div>
           )}
-          {rooms.length === 0 ? (
-            <Empty msg="This view has no cards yet. Tap Edit to add some." />
-          ) : (
-            rooms.map((s) => <RoomSection key={s.id} section={s} />)
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeId ?? "view"}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="space-y-8"
+            >
+              {rooms.length === 0 ? (
+                <Empty msg="This view has no cards yet. Tap Edit to add some." />
+              ) : (
+                rooms.map((s, i) => <RoomSection key={s.id} section={s} index={i} />)
+              )}
+            </motion.div>
+          </AnimatePresence>
+          {views.length > 1 && (
+            <>
+              <MobileViewSwitcher views={views} activeId={activeId} onSelect={setActiveView} />
+              <div className="h-16 md:hidden" />
+            </>
           )}
         </>
       )}
