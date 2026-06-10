@@ -577,6 +577,27 @@ def delete_item(item_id):
     return jsonify({"ok": True})
 
 
+@bp.post("/items/<int:item_id>/duplicate")
+@admin_required
+def duplicate_item(item_id):
+    """Clone a card into the same room, placed right after the original."""
+    src = _get_or_404(SectionItem, item_id)
+    copy = SectionItem(
+        section_id=src.section_id,
+        type=src.type,
+        entity_id=src.entity_id,
+        label=src.label,
+        icon=src.icon,
+        hidden=src.hidden,
+        config_json=src.config_json,
+        sort=_next_sort(SectionItem, section_id=src.section_id),
+    )
+    db.session.add(copy)
+    _audit("duplicate_item", src.entity_id or src.id)
+    db.session.commit()
+    return jsonify(_item_dict(copy)), 201
+
+
 @bp.post("/sections/<int:section_id>/items/reorder")
 @admin_required
 def reorder_items(section_id):

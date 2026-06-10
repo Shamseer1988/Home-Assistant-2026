@@ -19,13 +19,14 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, Copy, GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   createSection,
   createView,
   deleteItem,
   deleteSection,
   deleteView,
+  duplicateItem,
   fetchLayout,
   reorderItems,
   updateSection,
@@ -76,6 +77,14 @@ function SortableCard({ item, run }: { item: AdminItem; run: Run }) {
           className="rounded-lg bg-panel/90 p-1.5 text-muted shadow backdrop-blur hover:text-fg"
         >
           <Pencil className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          title="Duplicate card"
+          onClick={() => run(() => duplicateItem(item.id))}
+          className="rounded-lg bg-panel/90 p-1.5 text-muted shadow backdrop-blur hover:text-fg"
+        >
+          <Copy className="h-4 w-4" />
         </button>
         <button
           type="button"

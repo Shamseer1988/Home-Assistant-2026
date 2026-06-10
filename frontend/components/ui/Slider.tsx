@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAccentSky } from "@/lib/useAccent";
 
 export function Slider({
   value,
@@ -10,7 +11,7 @@ export function Slider({
   onCommit,
   label,
   suffix,
-  accent = "#59a0ff",
+  accent,
 }: {
   value: number;
   min?: number;
@@ -21,6 +22,8 @@ export function Slider({
   suffix?: string;
   accent?: string;
 }) {
+  const sky = useAccentSky();
+  const color = accent ?? sky;
   const [val, setVal] = useState(value);
   useEffect(() => setVal(value), [value]);
 
@@ -49,7 +52,7 @@ export function Slider({
         onTouchEnd={commit}
         onKeyUp={commit}
         style={{
-          background: `linear-gradient(to right, ${accent} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
+          background: `linear-gradient(to right, ${color} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
         }}
         className="w-full cursor-pointer"
       />

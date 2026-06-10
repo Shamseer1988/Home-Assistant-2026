@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---- Brand accent (customisable; space-separated RGB for Tailwind) ---- */
+:root {
+  --accent-blue: 77 121 255; /* #4d79ff */
+  --accent-sky: 89 160 255; /* #59a0ff */
+}
+
 /* ---- Light theme (default) ---- */
 :root {
   --fg: 15 23 42;

@@ -1,8 +1,10 @@
 "use client";
 
+import { useAccentSky } from "@/lib/useAccent";
+
 export function BarChart({
   data,
-  accent = "#59a0ff",
+  accent,
   unit = "",
   height = 160,
 }: {
@@ -11,6 +13,8 @@ export function BarChart({
   unit?: string;
   height?: number;
 }) {
+  const sky = useAccentSky();
+  const color = accent ?? sky;
   if (data.length === 0) return null;
   const max = Math.max(...data.map((d) => d.value), 0.001);
 
@@ -25,7 +29,7 @@ export function BarChart({
             className="w-full rounded-t-lg"
             style={{
               height: Math.max(4, (d.value / max) * height),
-              background: `linear-gradient(to top, ${accent}, ${accent}99)`,
+              background: `linear-gradient(to top, ${color}, ${color}99)`,
             }}
             title={`${d.value}${unit}`}
           />

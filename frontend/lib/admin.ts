@@ -110,5 +110,7 @@ export const updateItem = (
 ) => send("PATCH", `/api/admin/items/${id}`, data);
 export const deleteItem = (id: number) =>
   send("DELETE", `/api/admin/items/${id}`);
+export const duplicateItem = (id: number) =>
+  send("POST", `/api/admin/items/${id}/duplicate`);
 export const reorderItems = (sectionId: number, order: number[]) =>
   send("POST", `/api/admin/sections/${sectionId}/items/reorder`, { order });

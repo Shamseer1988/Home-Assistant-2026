@@ -11,13 +11,14 @@ const config: Config = {
         muted: "rgb(var(--muted) / <alpha-value>)",
         line: "rgb(var(--line) / <alpha-value>)",
         panel: "rgb(var(--panel) / <alpha-value>)",
-        // SIDRA brand palette
+        // SIDRA brand palette. blue/sky are the user-customisable accent,
+        // driven by CSS variables (see globals.css + AccentTheme).
         sidra: {
           bg: "#070b16",
           panel: "#0b1226",
           card: "#111a32",
-          blue: "#4d79ff",
-          sky: "#59a0ff",
+          blue: "rgb(var(--accent-blue) / <alpha-value>)",
+          sky: "rgb(var(--accent-sky) / <alpha-value>)",
           gold: "#e9c46a",
         },
       },

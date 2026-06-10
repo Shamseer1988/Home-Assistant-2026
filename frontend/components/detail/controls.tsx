@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { callService, fetchHistory } from "@/lib/api";
 import { domainOf } from "@/lib/ha";
+import { useAccentSky } from "@/lib/useAccent";
 import type { HAEntity } from "@/lib/types";
 import { Slider } from "@/components/ui/Slider";
 import { RadialGauge } from "@/components/ui/RadialGauge";
@@ -29,18 +30,20 @@ const call = (domain: string, service: string, data: Record<string, unknown>) =>
 function BigToggle({
   on,
   onClick,
-  accent = "#59a0ff",
+  accent,
 }: {
   on: boolean;
   onClick: () => void;
   accent?: string;
 }) {
+  const sky = useAccentSky();
+  const color = accent ?? sky;
   return (
     <button
       type="button"
       onClick={onClick}
       className="flex w-full items-center justify-center gap-2 rounded-2xl border border-line/10 py-3 text-sm font-semibold text-fg transition hover:opacity-90"
-      style={{ background: on ? accent : "rgba(255,255,255,0.05)" }}
+      style={{ background: on ? color : "rgba(255,255,255,0.05)" }}
     >
       <Power className="h-4 w-4" /> {on ? "On" : "Off"}
     </button>

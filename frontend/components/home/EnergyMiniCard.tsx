@@ -43,7 +43,7 @@ export function EnergyMiniCard() {
       )}
       {data && data.points.length > 1 && (
         <div className="mt-2">
-          <Sparkline points={data.points} accent="#59a0ff" />
+          <Sparkline points={data.points} />
         </div>
       )}
 

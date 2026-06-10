@@ -65,3 +65,23 @@ def test_export_then_import_clones_layout(auth_client):
 
     # an unrecognised document is rejected
     assert c.post("/api/admin/dashboards/import", json={"foo": 1}).status_code == 400
+
+
+def test_duplicate_item_clones_into_same_room(auth_client):
+    c = auth_client
+    sec = c.post("/api/admin/sections", json={"name": "Den"}).get_json()["id"]
+    card = c.post(
+        f"/api/admin/sections/{sec}/cards",
+        json={"type": "gauge", "entity_id": "sensor.temp", "label": "Temp", "config": {"max": 50}},
+    ).get_json()
+
+    dup = c.post(f"/api/admin/items/{card['id']}/duplicate")
+    assert dup.status_code == 201
+    copy = dup.get_json()
+    assert copy["id"] != card["id"]
+    assert copy["type"] == "gauge"
+    assert copy["entity_id"] == "sensor.temp"
+    assert copy["config"] == {"max": 50}
+
+    layout = next(s for s in c.get("/api/admin/layout").get_json()["sections"] if s["name"] == "Den")
+    assert [i["id"] for i in layout["items"]] == [card["id"], copy["id"]]

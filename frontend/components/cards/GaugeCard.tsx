@@ -1,6 +1,7 @@
 "use client";
 
 import { friendlyName } from "@/lib/ha";
+import { useAccentSky } from "@/lib/useAccent";
 import { useDetailStore } from "@/store/detail";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
@@ -17,6 +18,7 @@ export function GaugeCard({
 }) {
   const e = useEntityStore((s) => s.entities[entityId]);
   const open = useDetailStore((s) => s.open);
+  const sky = useAccentSky();
   if (!e) return null;
 
   const val = parseFloat(e.state);
@@ -33,7 +35,7 @@ export function GaugeCard({
         {Number.isNaN(val) ? (
           <p className="py-8 text-muted">{e.state}</p>
         ) : (
-          <RadialGauge value={val} min={min} max={max} unit={unit} accent="#59a0ff" />
+          <RadialGauge value={val} min={min} max={max} unit={unit} accent={sky} />
         )}
       </Card>
     </button>

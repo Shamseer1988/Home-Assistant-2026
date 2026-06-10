@@ -1,16 +1,19 @@
 "use client";
 
+import { useAccentSky } from "@/lib/useAccent";
 import type { HistoryPoint } from "@/lib/types";
 
 export function Sparkline({
   points,
-  accent = "#59a0ff",
+  accent,
   height = 48,
 }: {
   points: HistoryPoint[];
   accent?: string;
   height?: number;
 }) {
+  const sky = useAccentSky();
+  const color = accent ?? sky;
   if (points.length < 2) {
     return <p className="text-xs text-muted">Not enough history yet.</p>;
   }
@@ -33,8 +36,8 @@ export function Sparkline({
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full" preserveAspectRatio="none">
-      <path d={area} fill={accent} opacity={0.12} />
-      <path d={line} fill="none" stroke={accent} strokeWidth={2} vectorEffect="non-scaling-stroke" />
+      <path d={area} fill={color} opacity={0.12} />
+      <path d={line} fill="none" stroke={color} strokeWidth={2} vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }

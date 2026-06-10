@@ -31,6 +31,7 @@ import {
   updateView,
 } from "@/lib/admin";
 import type { AdminSection } from "@/lib/types";
+import { AppearancePanel } from "@/components/admin/AppearancePanel";
 import { DashboardsManager } from "@/components/admin/DashboardsManager";
 import { RoomEditor } from "@/components/admin/RoomEditor";
 import { VisibilityPanel } from "@/components/admin/VisibilityPanel";
@@ -280,6 +281,7 @@ export default function BuilderPage() {
         </DndContext>
       )}
 
+      <AppearancePanel />
       <WidgetsPanel />
       <VisibilityPanel />
     </div>
