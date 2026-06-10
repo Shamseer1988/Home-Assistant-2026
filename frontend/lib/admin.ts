@@ -1,10 +1,27 @@
 import { API_URL, apiGet } from "./api";
 import type { AdminLayout, PickerEntity } from "./types";
 
-export const fetchLayout = (dashboardId?: number) =>
-  apiGet<AdminLayout>(
-    `/api/admin/layout${dashboardId ? `?dashboard_id=${dashboardId}` : ""}`
-  );
+export const fetchLayout = (dashboardId?: number, viewId?: number) => {
+  const p = new URLSearchParams();
+  if (dashboardId) p.set("dashboard_id", String(dashboardId));
+  if (viewId) p.set("view_id", String(viewId));
+  const qs = p.toString();
+  return apiGet<AdminLayout>(`/api/admin/layout${qs ? `?${qs}` : ""}`);
+};
+
+export interface ViewMeta {
+  id: number;
+  name: string;
+  icon: string | null;
+  sort: number;
+}
+export const createView = (dashboardId: number, name: string) =>
+  send<ViewMeta>("POST", `/api/admin/dashboards/${dashboardId}/views`, { name });
+export const updateView = (id: number, data: { name?: string; icon?: string | null }) =>
+  send("PATCH", `/api/admin/views/${id}`, data);
+export const deleteView = (id: number) => send("DELETE", `/api/admin/views/${id}`);
+export const reorderViews = (order: number[]) =>
+  send("POST", "/api/admin/views/reorder", { order });
 export const fetchPickerEntities = () =>
   apiGet<PickerEntity[]>("/api/admin/entities");
 
@@ -42,8 +59,8 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
 }
 
 // Sections (rooms)
-export const createSection = (name: string, dashboardId?: number) =>
-  send("POST", "/api/admin/sections", { name, dashboard_id: dashboardId });
+export const createSection = (name: string, dashboardId?: number, viewId?: number) =>
+  send("POST", "/api/admin/sections", { name, dashboard_id: dashboardId, view_id: viewId });
 
 export interface NewCard {
   type: string;

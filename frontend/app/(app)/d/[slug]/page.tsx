@@ -18,6 +18,7 @@ export default function DashboardSlugPage() {
   const slug = String(params.slug);
   const { user } = useAuth();
   const [edit, setEdit] = useState(false);
+  const [activeView, setActiveView] = useState<number | null>(null);
 
   const setSnapshot = useEntityStore((s) => s.setSnapshot);
   const { data: states } = useQuery({
@@ -46,7 +47,10 @@ export default function DashboardSlugPage() {
     return <Empty msg="Dashboard not found." />;
   }
 
-  const rooms = data.sections.filter((s) => s.items.length > 0);
+  const views = data.views || [];
+  const activeId = activeView ?? views[0]?.id ?? null;
+  const activeViewObj = views.find((v) => v.id === activeId) || views[0];
+  const rooms = (activeViewObj?.sections || []).filter((s) => s.items.length > 0);
 
   return (
     <div className="space-y-8">
@@ -70,10 +74,35 @@ export default function DashboardSlugPage() {
 
       {edit ? (
         <EditableDashboard dashboardId={data.id} />
-      ) : rooms.length === 0 ? (
-        <Empty msg="This dashboard has no cards yet. Tap Edit to add some." />
       ) : (
-        rooms.map((s) => <RoomSection key={s.id} section={s} />)
+        <>
+          {views.length > 1 && (
+            <div className="flex flex-wrap gap-2 border-b border-line/10 pb-2">
+              {views.map((v) => {
+                const active = v.id === activeId;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setActiveView(v.id)}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                      active
+                        ? "bg-sidra-sky/15 text-fg"
+                        : "text-muted hover:bg-fg/5 hover:text-fg"
+                    }`}
+                  >
+                    {v.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {rooms.length === 0 ? (
+            <Empty msg="This view has no cards yet. Tap Edit to add some." />
+          ) : (
+            rooms.map((s) => <RoomSection key={s.id} section={s} />)
+          )}
+        </>
       )}
     </div>
   );

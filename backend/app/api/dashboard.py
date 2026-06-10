@@ -36,35 +36,48 @@ def list_dashboards():
     )
 
 
+def _section_tree(section, overrides):
+    items = []
+    for item in section.items:  # ordered by relationship
+        override = overrides.get(item.entity_id)
+        if item.hidden or (override and override.hidden):
+            continue
+        items.append(
+            {
+                "id": item.id,
+                "type": item.type,
+                "entity_id": item.entity_id,
+                "label": item.label or (override.friendly_name if override else None),
+                "icon": item.icon or (override.icon if override else None),
+                "config": item.config_json,
+            }
+        )
+    return {"id": section.id, "name": section.name, "icon": section.icon, "items": items}
+
+
 def _tree(dashboard):
     overrides = {o.entity_id: o for o in EntityOverride.query.all()}
-    sections = []
-    for section in dashboard.sections:  # ordered by relationship
-        if section.hidden:
-            continue
-        items = []
-        for item in section.items:  # ordered by relationship
-            override = overrides.get(item.entity_id)
-            if item.hidden or (override and override.hidden):
+
+    views = []
+    flat = []
+    for view in dashboard.views:  # ordered by relationship
+        vsections = []
+        for section in view.sections:  # ordered by relationship
+            if section.hidden:
                 continue
-            items.append(
-                {
-                    "id": item.id,
-                    "type": item.type,
-                    "entity_id": item.entity_id,
-                    "label": item.label or (override.friendly_name if override else None),
-                    "icon": item.icon or (override.icon if override else None),
-                    "config": item.config_json,
-                }
-            )
-        sections.append(
-            {"id": section.id, "name": section.name, "icon": section.icon, "items": items}
+            tree = _section_tree(section, overrides)
+            vsections.append(tree)
+            flat.append(tree)
+        views.append(
+            {"id": view.id, "name": view.name, "icon": view.icon, "sort": view.sort, "sections": vsections}
         )
+
     return {
         "id": dashboard.id,
         "name": dashboard.name,
         "slug": dashboard.slug,
-        "sections": sections,
+        "views": views,
+        "sections": flat,  # flattened, for widgets that read all sections
     }
 
 
@@ -72,7 +85,7 @@ def _tree(dashboard):
 def get_dashboard():
     dashboard = Dashboard.query.filter_by(is_default=True).first()
     if not dashboard:
-        return jsonify({"id": None, "name": None, "slug": None, "sections": []})
+        return jsonify({"id": None, "name": None, "slug": None, "views": [], "sections": []})
     return jsonify(_tree(dashboard))
 
 

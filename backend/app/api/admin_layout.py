@@ -9,7 +9,7 @@ from flask_jwt_extended import get_jwt_identity
 
 from ..extensions import db
 from ..models.audit import AuditLog
-from ..models.dashboard import Dashboard, EntityOverride, Section, SectionItem
+from ..models.dashboard import Dashboard, EntityOverride, Section, SectionItem, View
 from ..models.setting import Setting
 from ..services.state_store import store
 from ..utils.auth import admin_required
@@ -32,6 +32,19 @@ def _default_dashboard():
         db.session.add(dash)
         db.session.commit()
     return dash
+
+
+def _default_view(dash):
+    view = View.query.filter_by(dashboard_id=dash.id).order_by(View.sort).first()
+    if view is None:
+        view = View(dashboard_id=dash.id, name="Home", sort=0)
+        db.session.add(view)
+        db.session.commit()
+    return view
+
+
+def _view_dict(v):
+    return {"id": v.id, "name": v.name, "icon": v.icon, "sort": v.sort}
 
 
 def _next_sort(model, **filters):
@@ -91,12 +104,20 @@ def _override_dict(o):
 @admin_required
 def get_layout():
     dashboard_id = request.args.get("dashboard_id", type=int)
+    view_id = request.args.get("view_id", type=int)
+
     dash = db.session.get(Dashboard, dashboard_id) if dashboard_id else None
     if dash is None:
         dash = _default_dashboard()
+    _default_view(dash)  # ensure at least one view exists
+
+    view = db.session.get(View, view_id) if view_id else None
+    if view is None or view.dashboard_id != dash.id:
+        view = View.query.filter_by(dashboard_id=dash.id).order_by(View.sort).first()
+
     overrides = {o.entity_id: o for o in EntityOverride.query.all()}
     sections = []
-    for s in dash.sections:
+    for s in (view.sections if view else []):
         items = []
         for it in s.items:
             ov = overrides.get(it.entity_id)
@@ -117,7 +138,72 @@ def get_layout():
                 "items": items,
             }
         )
-    return jsonify({"id": dash.id, "name": dash.name, "sections": sections})
+    return jsonify(
+        {
+            "id": dash.id,
+            "name": dash.name,
+            "view_id": view.id if view else None,
+            "views": [_view_dict(v) for v in dash.views],
+            "sections": sections,
+        }
+    )
+
+
+# --------------------------------------------------------------------- views
+@bp.post("/dashboards/<int:dashboard_id>/views")
+@admin_required
+def create_view(dashboard_id):
+    dash = _get_or_404(Dashboard, dashboard_id)
+    name = ((request.get_json(silent=True) or {}).get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+    view = View(dashboard_id=dash.id, name=name, sort=_next_sort(View, dashboard_id=dash.id))
+    db.session.add(view)
+    _audit("create_view", name)
+    db.session.commit()
+    return jsonify(_view_dict(view)), 201
+
+
+@bp.patch("/views/<int:view_id>")
+@admin_required
+def update_view(view_id):
+    view = _get_or_404(View, view_id)
+    data = request.get_json(silent=True) or {}
+    if "name" in data:
+        name = (data["name"] or "").strip()
+        if not name:
+            return jsonify({"error": "name is required"}), 400
+        view.name = name
+    if "icon" in data:
+        view.icon = data["icon"] or None
+    _audit("update_view", view.name)
+    db.session.commit()
+    return jsonify(_view_dict(view))
+
+
+@bp.delete("/views/<int:view_id>")
+@admin_required
+def delete_view(view_id):
+    view = _get_or_404(View, view_id)
+    if View.query.filter_by(dashboard_id=view.dashboard_id).count() <= 1:
+        return jsonify({"error": "a dashboard needs at least one view"}), 400
+    _audit("delete_view", view.name)
+    # cascade deletes the view's sections (FK ondelete=CASCADE + ORM)
+    for s in list(view.sections):
+        db.session.delete(s)
+    db.session.delete(view)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@bp.post("/views/reorder")
+@admin_required
+def reorder_views():
+    order = (request.get_json(silent=True) or {}).get("order") or []
+    for index, vid in enumerate(order):
+        View.query.filter_by(id=vid).update({"sort": index})
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 # ----------------------------------------------------------------- dashboards
@@ -163,6 +249,8 @@ def create_dashboard():
         sort=_next_sort(Dashboard),
     )
     db.session.add(dash)
+    db.session.flush()
+    db.session.add(View(dashboard_id=dash.id, name="Home", sort=0))
     _audit("create_dashboard", name)
     db.session.commit()
     return jsonify(_dashboard_dict(dash)), 201
@@ -238,13 +326,20 @@ def create_section():
     name = (data.get("name") or "").strip()
     if not name:
         return jsonify({"error": "name is required"}), 400
-    dashboard_id = data.get("dashboard_id")
-    dash = (db.session.get(Dashboard, dashboard_id) if dashboard_id else None) or _default_dashboard()
+
+    view = db.session.get(View, data["view_id"]) if data.get("view_id") else None
+    if view is not None:
+        dash = view.dashboard
+    else:
+        dash = (db.session.get(Dashboard, data.get("dashboard_id")) if data.get("dashboard_id") else None) or _default_dashboard()
+        view = _default_view(dash)
+
     section = Section(
         dashboard_id=dash.id,
+        view_id=view.id,
         name=name,
         icon=data.get("icon") or None,
-        sort=_next_sort(Section, dashboard_id=dash.id),
+        sort=_next_sort(Section, view_id=view.id),
     )
     db.session.add(section)
     _audit("create_section", name)

@@ -33,6 +33,24 @@ def _ensure_columns(app):
     add("section_items", "hidden", "hidden BOOLEAN NOT NULL DEFAULT 0")
     add("sections", "hidden", "hidden BOOLEAN NOT NULL DEFAULT 0")
     add("dashboards", "hidden", "hidden BOOLEAN NOT NULL DEFAULT 0")
+    add("sections", "view_id", "view_id INTEGER")
+
+
+def _ensure_views(app):
+    """Backfill a default View per dashboard and attach orphan sections to it."""
+    from .models.dashboard import Dashboard, Section, View
+
+    for dash in Dashboard.query.all():
+        view = View.query.filter_by(dashboard_id=dash.id).order_by(View.sort).first()
+        if view is None:
+            view = View(dashboard_id=dash.id, name="Home", sort=0)
+            db.session.add(view)
+            db.session.flush()
+        # attach any sections that don't yet belong to a view
+        orphans = Section.query.filter_by(dashboard_id=dash.id, view_id=None).all()
+        for s in orphans:
+            s.view_id = view.id
+    db.session.commit()
 
 
 def _seed_admin(app):
@@ -90,6 +108,7 @@ def create_app(config_object=Config):
 
         db.create_all()
         _ensure_columns(app)
+        _ensure_views(app)
         _seed_admin(app)
 
     # --- Home Assistant REST client ---

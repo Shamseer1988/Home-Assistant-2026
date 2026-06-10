@@ -22,15 +22,18 @@ import { CSS } from "@dnd-kit/utilities";
 import { Check, GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   createSection,
+  createView,
   deleteItem,
   deleteSection,
+  deleteView,
   fetchLayout,
   reorderItems,
   updateSection,
+  updateView,
 } from "@/lib/admin";
 import { cardSpan } from "@/lib/cardTypes";
 import { roomIcon } from "@/lib/roomIcon";
-import type { AdminItem, AdminSection } from "@/lib/types";
+import type { AdminItem, AdminSection, ViewMeta } from "@/lib/types";
 import { DashCard } from "@/components/cards/DashCard";
 import { CardPicker } from "@/components/admin/CardPicker";
 import { Card } from "@/components/ui/Card";
@@ -199,11 +202,87 @@ function EditableRoom({
   );
 }
 
+function ViewTabs({
+  views,
+  activeId,
+  onSelect,
+  onAdd,
+  run,
+  afterMutate,
+}: {
+  views: ViewMeta[];
+  activeId: number | null;
+  onSelect: (id: number) => void;
+  onAdd: () => void;
+  run: Run;
+  afterMutate: () => void;
+}) {
+  if (views.length === 0) return null;
+  const rename = async (v: ViewMeta) => {
+    const n = window.prompt("Rename view", v.name);
+    if (n?.trim()) {
+      await run(() => updateView(v.id, { name: n.trim() }));
+      afterMutate();
+    }
+  };
+  const del = async (v: ViewMeta) => {
+    if (views.length <= 1) return;
+    if (window.confirm(`Delete view “${v.name}” and its rooms?`)) {
+      await run(() => deleteView(v.id));
+      onSelect(views.find((x) => x.id !== v.id)!.id);
+      afterMutate();
+    }
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-b border-line/10 pb-2">
+      {views.map((v) => {
+        const active = v.id === activeId;
+        return (
+          <div
+            key={v.id}
+            className={`flex items-center gap-1 rounded-full px-1 ${active ? "bg-sidra-sky/15" : ""}`}
+          >
+            <button
+              type="button"
+              onClick={() => onSelect(v.id)}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+                active ? "text-fg" : "text-muted hover:text-fg"
+              }`}
+            >
+              {v.name}
+            </button>
+            {active && (
+              <>
+                <button type="button" onClick={() => rename(v)} title="Rename view" className="rounded p-1 text-muted hover:text-fg">
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                {views.length > 1 && (
+                  <button type="button" onClick={() => del(v)} title="Delete view" className="rounded p-1 text-rose-400">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        );
+      })}
+      <button
+        type="button"
+        onClick={onAdd}
+        className="flex items-center gap-1 rounded-full border border-dashed border-line/20 px-3 py-1.5 text-sm text-muted hover:bg-fg/5"
+      >
+        <Plus className="h-3.5 w-3.5" /> View
+      </button>
+    </div>
+  );
+}
+
 export function EditableDashboard({ dashboardId }: { dashboardId: number }) {
   const qc = useQueryClient();
+  const [viewId, setViewId] = useState<number | null>(null);
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["admin", "layout", dashboardId],
-    queryFn: () => fetchLayout(dashboardId),
+    queryKey: ["admin", "layout", dashboardId, viewId],
+    queryFn: () => fetchLayout(dashboardId, viewId ?? undefined),
   });
   const [error, setError] = useState<string | null>(null);
   const [newRoom, setNewRoom] = useState("");
@@ -219,11 +298,21 @@ export function EditableDashboard({ dashboardId }: { dashboardId: number }) {
     }
   };
 
+  const activeViewId = viewId ?? data?.view_id ?? null;
+
   const addRoom = async () => {
     const n = newRoom.trim();
     if (!n) return;
-    await run(() => createSection(n, dashboardId));
+    await run(() => createSection(n, undefined, activeViewId ?? undefined));
     setNewRoom("");
+  };
+
+  const addView = async () => {
+    const name = window.prompt("New view name");
+    if (!name?.trim()) return;
+    const v = await createView(dashboardId, name.trim()).catch(() => null);
+    await refetch();
+    if (v) setViewId(v.id);
   };
 
   if (isLoading) {
@@ -235,9 +324,18 @@ export function EditableDashboard({ dashboardId }: { dashboardId: number }) {
   }
 
   const sections = data?.sections || [];
+  const views = data?.views || [];
 
   return (
     <div className="space-y-8">
+      <ViewTabs
+        views={views}
+        activeId={activeViewId}
+        onSelect={setViewId}
+        onAdd={addView}
+        run={run}
+        afterMutate={refetch}
+      />
       {error && (
         <p className="rounded-xl bg-rose-500/10 px-4 py-2.5 text-sm text-rose-300">{error}</p>
       )}

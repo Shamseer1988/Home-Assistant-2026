@@ -20,12 +20,15 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   createSection,
+  createView,
+  deleteView,
   fetchAdminDashboards,
   fetchLayout,
   reorderSections,
+  updateView,
 } from "@/lib/admin";
 import type { AdminSection } from "@/lib/types";
 import { DashboardsManager } from "@/components/admin/DashboardsManager";
@@ -71,16 +74,20 @@ export default function BuilderPage() {
     queryFn: fetchAdminDashboards,
   });
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [viewId, setViewId] = useState<number | null>(null);
   const effectiveId = selectedId ?? dashboards?.find((d) => d.is_default)?.id ?? null;
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["admin", "layout", effectiveId],
-    queryFn: () => fetchLayout(effectiveId ?? undefined),
+    queryKey: ["admin", "layout", effectiveId, viewId],
+    queryFn: () => fetchLayout(effectiveId ?? undefined, viewId ?? undefined),
     enabled: dashboards != null,
   });
   const [error, setError] = useState<string | null>(null);
   const [newRoom, setNewRoom] = useState("");
   const [adding, setAdding] = useState(false);
+
+  const views = data?.views || [];
+  const activeViewId = viewId && views.some((v) => v.id === viewId) ? viewId : data?.view_id ?? null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -114,7 +121,7 @@ export default function BuilderPage() {
     const newI = ids.indexOf(Number(over.id));
     if (oldI < 0 || newI < 0) return;
     const newIds = arrayMove(ids, oldI, newI);
-    qc.setQueryData(["admin", "layout", effectiveId], (old: any) =>
+    qc.setQueryData(["admin", "layout", effectiveId, viewId], (old: any) =>
       old ? { ...old, sections: arrayMove(old.sections, oldI, newI) } : old
     );
     run(() => reorderSections(newIds));
@@ -124,9 +131,18 @@ export default function BuilderPage() {
     const name = newRoom.trim();
     if (!name) return;
     setAdding(true);
-    await run(() => createSection(name, effectiveId ?? undefined));
+    await run(() => createSection(name, undefined, activeViewId ?? undefined));
     setNewRoom("");
     setAdding(false);
+  };
+
+  const addView = async () => {
+    if (!effectiveId) return;
+    const name = window.prompt("New view name");
+    if (!name?.trim()) return;
+    const v = await createView(effectiveId, name.trim()).catch(() => null);
+    await reload();
+    if (v) setViewId(v.id);
   };
 
   return (
@@ -154,6 +170,67 @@ export default function BuilderPage() {
       <p className="text-sm font-semibold text-fg">
         Editing: {dashboards?.find((d) => d.id === effectiveId)?.name || "Home"}
       </p>
+
+      {views.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-line/10 pb-2">
+          {views.map((v) => {
+            const active = v.id === activeViewId;
+            return (
+              <div
+                key={v.id}
+                className={`flex items-center gap-1 rounded-full px-1 ${active ? "bg-sidra-sky/15" : ""}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setViewId(v.id)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+                    active ? "text-fg" : "text-muted hover:text-fg"
+                  }`}
+                >
+                  {v.name}
+                </button>
+                {active && (
+                  <>
+                    <button
+                      type="button"
+                      title="Rename view"
+                      onClick={() => {
+                        const n = window.prompt("Rename view", v.name);
+                        if (n?.trim()) run(() => updateView(v.id, { name: n.trim() }));
+                      }}
+                      className="rounded p-1 text-muted hover:text-fg"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    {views.length > 1 && (
+                      <button
+                        type="button"
+                        title="Delete view"
+                        onClick={() => {
+                          if (window.confirm(`Delete view “${v.name}” and its rooms?`)) {
+                            setViewId(null);
+                            run(() => deleteView(v.id));
+                          }
+                        }}
+                        className="rounded p-1 text-rose-400"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+          <button
+            type="button"
+            onClick={addView}
+            className="flex items-center gap-1 rounded-full border border-dashed border-line/20 px-3 py-1.5 text-sm text-muted hover:bg-fg/5"
+          >
+            <Plus className="h-3.5 w-3.5" /> View
+          </button>
+        </div>
+      )}
 
       <Card className="flex items-center gap-2 p-3">
         <input

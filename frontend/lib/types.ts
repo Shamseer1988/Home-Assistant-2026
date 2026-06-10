@@ -29,10 +29,19 @@ export interface DashSection {
   items: DashItem[];
 }
 
+export interface DashView {
+  id: number;
+  name: string;
+  icon: string | null;
+  sort: number;
+  sections: DashSection[];
+}
+
 export interface DashConfig {
   id: number | null;
   name: string | null;
   slug: string | null;
+  views: DashView[];
   sections: DashSection[];
 }
 
@@ -67,9 +76,18 @@ export interface AdminSection {
   items: AdminItem[];
 }
 
+export interface ViewMeta {
+  id: number;
+  name: string;
+  icon: string | null;
+  sort: number;
+}
+
 export interface AdminLayout {
   id: number | null;
   name: string | null;
+  view_id?: number | null;
+  views?: ViewMeta[];
   sections: AdminSection[];
 }
 

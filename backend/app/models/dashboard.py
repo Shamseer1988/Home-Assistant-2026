@@ -28,6 +28,34 @@ class Dashboard(db.Model):
         cascade="all, delete-orphan",
         order_by="Section.sort",
     )
+    views = db.relationship(
+        "View",
+        back_populates="dashboard",
+        cascade="all, delete-orphan",
+        order_by="View.sort",
+    )
+
+
+class View(db.Model):
+    """A tab within a dashboard (Home Assistant "view")."""
+
+    __tablename__ = "views"
+
+    id = db.Column(db.Integer, primary_key=True)
+    dashboard_id = db.Column(
+        db.Integer, db.ForeignKey("dashboards.id", ondelete="CASCADE"), nullable=False
+    )
+    name = db.Column(db.String(120), nullable=False)
+    icon = db.Column(db.String(120))
+    sort = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    dashboard = db.relationship("Dashboard", back_populates="views")
+    sections = db.relationship(
+        "Section",
+        back_populates="view",
+        order_by="Section.sort",
+    )
 
 
 class Section(db.Model):
@@ -37,6 +65,7 @@ class Section(db.Model):
     dashboard_id = db.Column(
         db.Integer, db.ForeignKey("dashboards.id", ondelete="CASCADE"), nullable=False
     )
+    view_id = db.Column(db.Integer, db.ForeignKey("views.id", ondelete="CASCADE"))
     name = db.Column(db.String(120), nullable=False)
     icon = db.Column(db.String(120))
     sort = db.Column(db.Integer, default=0, nullable=False)
@@ -44,6 +73,7 @@ class Section(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     dashboard = db.relationship("Dashboard", back_populates="sections")
+    view = db.relationship("View", back_populates="sections")
     items = db.relationship(
         "SectionItem",
         back_populates="section",
