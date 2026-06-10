@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Eye, EyeOff, GripVertical, Pencil, Trash2, X } from "lucide-react";
+import { Check, Eye, EyeOff, GripVertical, Pencil, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { deleteItem, updateItem } from "@/lib/admin";
 import { CARD_LABEL } from "@/lib/cardTypes";
 import type { AdminItem, AdminSection } from "@/lib/types";
+import { CardEditor } from "@/components/admin/CardEditor";
 import { IconButton } from "@/components/ui/IconButton";
 
 export function ItemRow({
@@ -19,6 +20,7 @@ export function ItemRow({
   dragHandle?: Record<string, unknown>;
 }) {
   const [editing, setEditing] = useState(false);
+  const [cardEdit, setCardEdit] = useState(false);
   const [label, setLabel] = useState(item.label || "");
   const cardLabel = CARD_LABEL[item.type] || item.type;
   const display =
@@ -102,9 +104,13 @@ export function ItemRow({
       <IconButton title="Rename" onClick={() => setEditing(true)}>
         <Pencil className="h-4 w-4" />
       </IconButton>
+      <IconButton title="Configure card" onClick={() => setCardEdit(true)}>
+        <SlidersHorizontal className="h-4 w-4" />
+      </IconButton>
       <IconButton title="Remove" onClick={() => run(() => deleteItem(item.id))}>
         <Trash2 className="h-4 w-4 text-rose-400" />
       </IconButton>
+      {cardEdit && <CardEditor item={item} run={run} onClose={() => setCardEdit(false)} />}
     </div>
   );
 }

@@ -36,6 +36,7 @@ import { roomIcon } from "@/lib/roomIcon";
 import type { AdminItem, AdminSection, ViewMeta } from "@/lib/types";
 import { DashCard } from "@/components/cards/DashCard";
 import { CardPicker } from "@/components/admin/CardPicker";
+import { CardEditor } from "@/components/admin/CardEditor";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 
@@ -45,6 +46,7 @@ function SortableCard({ item, run }: { item: AdminItem; run: Run }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(item.id),
   });
+  const [editing, setEditing] = useState(false);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -52,7 +54,7 @@ function SortableCard({ item, run }: { item: AdminItem; run: Run }) {
     zIndex: isDragging ? 40 : undefined,
   };
   return (
-    <div ref={setNodeRef} style={style} className={`relative ${cardSpan(item.type)}`}>
+    <div ref={setNodeRef} style={style} className={`relative ${cardSpan(item.type, item.config)}`}>
       <div className="pointer-events-none">
         <DashCard item={item} />
       </div>
@@ -69,6 +71,14 @@ function SortableCard({ item, run }: { item: AdminItem; run: Run }) {
         </button>
         <button
           type="button"
+          title="Edit card"
+          onClick={() => setEditing(true)}
+          className="rounded-lg bg-panel/90 p-1.5 text-muted shadow backdrop-blur hover:text-fg"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
           title="Remove card"
           onClick={() => {
             if (window.confirm("Remove this card?")) run(() => deleteItem(item.id));
@@ -78,6 +88,7 @@ function SortableCard({ item, run }: { item: AdminItem; run: Run }) {
           <Trash2 className="h-4 w-4" />
         </button>
       </div>
+      {editing && <CardEditor item={item} run={run} onClose={() => setEditing(false)} />}
     </div>
   );
 }

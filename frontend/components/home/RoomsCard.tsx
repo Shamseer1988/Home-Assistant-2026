@@ -57,7 +57,7 @@ export function RoomsCard() {
         <Modal title={room.name} onClose={() => setRoom(null)}>
           <div className="grid grid-cols-2 gap-3">
             {room.items.map((it) => (
-              <div key={it.id} className={cardSpan(it.type) ? "col-span-2" : ""}>
+              <div key={it.id} className={cardSpan(it.type, it.config) ? "col-span-2" : ""}>
                 <DashCard item={it} />
               </div>
             ))}

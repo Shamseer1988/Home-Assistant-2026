@@ -442,6 +442,8 @@ def update_item(item_id):
         item.label = data["label"] or None
     if "icon" in data:
         item.icon = data["icon"] or None
+    if "entity_id" in data:
+        item.entity_id = data["entity_id"] or None
     if "hidden" in data:
         item.hidden = bool(data["hidden"])
     if "config" in data:

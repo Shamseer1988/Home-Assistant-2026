@@ -39,10 +39,24 @@ export const CARD_LABEL: Record<string, string> = Object.fromEntries(
   CARD_TYPES.map((c) => [c.key, c.name])
 );
 
-/** Grid column span for a card type on the dashboard. */
-export function cardSpan(type: string): string {
-  if (["markdown", "iframe", "entities"].includes(type))
-    return "col-span-2 sm:col-span-3 lg:col-span-4 xl:col-span-5";
+// Width options (number of columns to span), used by the card editor.
+export const WIDTH_OPTIONS: { value: string; label: string; cls: string }[] = [
+  { value: "auto", label: "Auto", cls: "" },
+  { value: "1", label: "1×", cls: "" },
+  { value: "2", label: "2×", cls: "col-span-2" },
+  { value: "3", label: "3×", cls: "col-span-2 sm:col-span-3" },
+  { value: "4", label: "4×", cls: "col-span-2 sm:col-span-4" },
+  { value: "full", label: "Full", cls: "col-span-2 sm:col-span-3 lg:col-span-4 xl:col-span-5" },
+];
+const WIDTH_CLS: Record<string, string> = Object.fromEntries(
+  WIDTH_OPTIONS.map((w) => [w.value, w.cls])
+);
+
+/** Grid column span for a card — honours config.cols, else a per-type default. */
+export function cardSpan(type: string, config?: Record<string, any> | null): string {
+  const cols = config?.cols;
+  if (cols != null && WIDTH_CLS[String(cols)] !== undefined) return WIDTH_CLS[String(cols)];
+  if (["markdown", "iframe", "entities"].includes(type)) return WIDTH_CLS.full;
   if (["glance", "weather", "camera", "graph"].includes(type)) return "col-span-2";
   return "";
 }
