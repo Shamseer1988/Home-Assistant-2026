@@ -34,6 +34,7 @@ export interface DashView {
   name: string;
   icon: string | null;
   sort: number;
+  badges?: string[];
   sections: DashSection[];
 }
 
@@ -81,6 +82,7 @@ export interface ViewMeta {
   name: string;
   icon: string | null;
   sort: number;
+  badges?: string[];
 }
 
 export interface AdminLayout {

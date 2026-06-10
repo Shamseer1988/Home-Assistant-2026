@@ -36,7 +36,7 @@ export function GraphCard({
         </p>
       </div>
       {data && data.points.length > 1 ? (
-        <Sparkline points={data.points} height={56} />
+        <Sparkline points={data.points} height={56} accent={cfg?.color} />
       ) : (
         <p className="py-4 text-xs text-muted">Collecting history…</p>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { Maximize2 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -29,9 +29,11 @@ const ACCENT: Record<string, { bg: string; icon: string }> = {
 export function DeviceTile({
   entity,
   label,
+  color,
 }: {
   entity: HAEntity;
   label?: string | null;
+  color?: string | null;
 }) {
   const [pending, setPending] = useState(false);
   const openDetail = useDetailStore((s) => s.open);
@@ -40,6 +42,15 @@ export function DeviceTile({
   const unavailable = isUnavailable(entity);
   const Icon = iconFor(entity);
   const accent = ACCENT[domain] ?? ACCENT.switch;
+  // A custom card colour (hex) replaces the per-domain accent while on.
+  const customOn: CSSProperties | undefined =
+    color && on
+      ? {
+          background: `linear-gradient(135deg, ${color}40, ${color}1a)`,
+          borderColor: `${color}4d`,
+          boxShadow: `0 0 30px ${color}33`,
+        }
+      : undefined;
 
   const toggle = async () => {
     if (unavailable || pending) return;
@@ -67,10 +78,11 @@ export function DeviceTile({
       }}
       className={cn(
         "group relative flex cursor-pointer flex-col items-start gap-3 rounded-3xl border p-4 text-left transition-all",
-        on ? accent.bg : "border-line/10 bg-fg/[0.04] hover:bg-fg/[0.07]",
+        on ? (color ? "" : accent.bg) : "border-line/10 bg-fg/[0.04] hover:bg-fg/[0.07]",
         unavailable && "cursor-not-allowed opacity-40",
         pending && "animate-pulse"
       )}
+      style={customOn}
     >
       <div className="flex w-full items-center justify-between">
         <span
@@ -79,7 +91,10 @@ export function DeviceTile({
             on ? "bg-fg/10" : "bg-fg/5"
           )}
         >
-          <Icon className={cn("h-5 w-5", on ? accent.icon : "text-muted")} />
+          <Icon
+            className={cn("h-5 w-5", on ? (color ? "" : accent.icon) : "text-muted")}
+            style={color && on ? { color } : undefined}
+          />
         </span>
         <div className="flex items-center gap-1.5">
           <button

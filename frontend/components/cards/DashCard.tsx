@@ -37,6 +37,8 @@ export function DashCard({ item }: { item: DashItem }) {
       return <IframeCard url={cfg.url || ""} title={cfg.title} height={cfg.height} />;
     case "entity":
     default:
-      return item.entity_id ? <EntityTile entityId={item.entity_id} label={item.label} /> : null;
+      return item.entity_id ? (
+        <EntityTile entityId={item.entity_id} label={item.label} color={cfg.color} />
+      ) : null;
   }
 }

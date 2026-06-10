@@ -69,7 +69,14 @@ def _tree(dashboard):
             vsections.append(tree)
             flat.append(tree)
         views.append(
-            {"id": view.id, "name": view.name, "icon": view.icon, "sort": view.sort, "sections": vsections}
+            {
+                "id": view.id,
+                "name": view.name,
+                "icon": view.icon,
+                "sort": view.sort,
+                "badges": view.badges_json or [],
+                "sections": vsections,
+            }
         )
 
     return {

@@ -19,7 +19,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Copy, GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { BadgeCheck, Check, Copy, GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   createSection,
   createView,
@@ -36,6 +36,7 @@ import { cardSpan } from "@/lib/cardTypes";
 import { roomIcon } from "@/lib/roomIcon";
 import type { AdminItem, AdminSection, ViewMeta } from "@/lib/types";
 import { DashCard } from "@/components/cards/DashCard";
+import { BadgesEditor } from "@/components/dashboard/BadgesEditor";
 import { CardPicker } from "@/components/admin/CardPicker";
 import { CardEditor } from "@/components/admin/CardEditor";
 import { Card } from "@/components/ui/Card";
@@ -237,6 +238,7 @@ function ViewTabs({
   run: Run;
   afterMutate: () => void;
 }) {
+  const [badgeEdit, setBadgeEdit] = useState<ViewMeta | null>(null);
   if (views.length === 0) return null;
   const rename = async (v: ViewMeta) => {
     const n = window.prompt("Rename view", v.name);
@@ -276,6 +278,9 @@ function ViewTabs({
                 <button type="button" onClick={() => rename(v)} title="Rename view" className="rounded p-1 text-muted hover:text-fg">
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
+                <button type="button" onClick={() => setBadgeEdit(v)} title="Edit badges" className="rounded p-1 text-muted hover:text-fg">
+                  <BadgeCheck className="h-3.5 w-3.5" />
+                </button>
                 {views.length > 1 && (
                   <button type="button" onClick={() => del(v)} title="Delete view" className="rounded p-1 text-rose-400">
                     <Trash2 className="h-3.5 w-3.5" />
@@ -293,6 +298,18 @@ function ViewTabs({
       >
         <Plus className="h-3.5 w-3.5" /> View
       </button>
+      {badgeEdit && (
+        <BadgesEditor
+          viewId={badgeEdit.id}
+          viewName={badgeEdit.name}
+          badges={badgeEdit.badges || []}
+          run={run}
+          onClose={() => {
+            setBadgeEdit(null);
+            afterMutate();
+          }}
+        />
+      )}
     </div>
   );
 }

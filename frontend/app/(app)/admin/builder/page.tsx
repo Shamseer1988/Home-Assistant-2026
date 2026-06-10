@@ -20,7 +20,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   createSection,
   createView,
@@ -30,7 +30,8 @@ import {
   reorderSections,
   updateView,
 } from "@/lib/admin";
-import type { AdminSection } from "@/lib/types";
+import type { AdminSection, ViewMeta } from "@/lib/types";
+import { BadgesEditor } from "@/components/dashboard/BadgesEditor";
 import { AppearancePanel } from "@/components/admin/AppearancePanel";
 import { DashboardsManager } from "@/components/admin/DashboardsManager";
 import { RoomEditor } from "@/components/admin/RoomEditor";
@@ -86,6 +87,7 @@ export default function BuilderPage() {
   const [error, setError] = useState<string | null>(null);
   const [newRoom, setNewRoom] = useState("");
   const [adding, setAdding] = useState(false);
+  const [badgeEdit, setBadgeEdit] = useState<ViewMeta | null>(null);
 
   const views = data?.views || [];
   const activeViewId = viewId && views.some((v) => v.id === viewId) ? viewId : data?.view_id ?? null;
@@ -203,6 +205,14 @@ export default function BuilderPage() {
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
+                    <button
+                      type="button"
+                      title="Edit badges"
+                      onClick={() => setBadgeEdit(v)}
+                      className="rounded p-1 text-muted hover:text-fg"
+                    >
+                      <BadgeCheck className="h-3.5 w-3.5" />
+                    </button>
                     {views.length > 1 && (
                       <button
                         type="button"
@@ -231,6 +241,16 @@ export default function BuilderPage() {
             <Plus className="h-3.5 w-3.5" /> View
           </button>
         </div>
+      )}
+
+      {badgeEdit && (
+        <BadgesEditor
+          viewId={badgeEdit.id}
+          viewName={badgeEdit.name}
+          badges={badgeEdit.badges || []}
+          run={run}
+          onClose={() => setBadgeEdit(null)}
+        />
       )}
 
       <Card className="flex items-center gap-2 p-3">

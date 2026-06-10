@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, Search } from "lucide-react";
 import { fetchPickerEntities, updateItem } from "@/lib/admin";
-import { CARD_TYPES, WIDTH_OPTIONS } from "@/lib/cardTypes";
+import { CARD_COLORS, CARD_TYPES, WIDTH_OPTIONS } from "@/lib/cardTypes";
 import { Modal } from "@/components/ui/Modal";
 
 export interface EditableCard {
@@ -36,6 +36,7 @@ export function CardEditor({
   const [url, setUrl] = useState(cfg.url || "");
   const [service, setService] = useState(cfg.service || "");
   const [cols, setCols] = useState<string>(cfg.cols != null ? String(cfg.cols) : "auto");
+  const [color, setColor] = useState<string>(cfg.color || "");
 
   const filtered = useMemo(() => {
     const t = q.toLowerCase().trim();
@@ -49,6 +50,8 @@ export function CardEditor({
     delete config.entity_ids;
     if (cols === "auto") delete config.cols;
     else config.cols = cols;
+    if (color) config.color = color;
+    else delete config.color;
 
     const patch: any = { config };
     if (def.needs === "entity") {
@@ -192,6 +195,40 @@ export function CardEditor({
                 {w.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-muted">Colour</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setColor("")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                color === ""
+                  ? "bg-sidra-sky text-white"
+                  : "border border-line/10 bg-fg/5 text-muted hover:bg-fg/10"
+              }`}
+            >
+              Auto
+            </button>
+            {CARD_COLORS.map((c) => {
+              const active = color === c.hex;
+              return (
+                <button
+                  key={c.hex}
+                  type="button"
+                  title={c.name}
+                  onClick={() => setColor(c.hex)}
+                  style={{ backgroundColor: c.hex }}
+                  className={`h-7 w-7 rounded-full transition ${
+                    active ? "ring-2 ring-fg ring-offset-2 ring-offset-panel" : "hover:scale-110"
+                  }`}
+                >
+                  {active && <Check className="mx-auto h-3.5 w-3.5 text-white drop-shadow" />}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

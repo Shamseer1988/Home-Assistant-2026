@@ -48,6 +48,7 @@ class View(db.Model):
     name = db.Column(db.String(120), nullable=False)
     icon = db.Column(db.String(120))
     sort = db.Column(db.Integer, default=0, nullable=False)
+    badges_json = db.Column(db.JSON)  # list of entity_ids shown as chips
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     dashboard = db.relationship("Dashboard", back_populates="views")

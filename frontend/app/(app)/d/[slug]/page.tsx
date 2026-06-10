@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/useAuth";
 import type { HAEntity } from "@/lib/types";
 import { useEntityStore } from "@/store/entities";
 import { RoomSection } from "@/components/cards/RoomSection";
+import { BadgesRow } from "@/components/dashboard/BadgesRow";
 import { EditableDashboard } from "@/components/dashboard/EditableDashboard";
 import { MobileViewSwitcher } from "@/components/dashboard/MobileViewSwitcher";
 import { Empty } from "@/components/special/common";
@@ -108,6 +109,7 @@ export default function DashboardSlugPage() {
               transition={{ duration: 0.2, ease: "easeOut" }}
               className="space-y-8"
             >
+              <BadgesRow ids={activeViewObj?.badges} />
               {rooms.length === 0 ? (
                 <Empty msg="This view has no cards yet. Tap Edit to add some." />
               ) : (

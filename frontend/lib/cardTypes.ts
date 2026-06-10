@@ -60,3 +60,15 @@ export function cardSpan(type: string, config?: Record<string, any> | null): str
   if (["glance", "weather", "camera", "graph"].includes(type)) return "col-span-2";
   return "";
 }
+
+// Per-card colour choices (config.color, 6-digit hex so "#rrggbbaa" tints work).
+export const CARD_COLORS: { name: string; hex: string }[] = [
+  { name: "Amber", hex: "#f59e0b" },
+  { name: "Orange", hex: "#fb923c" },
+  { name: "Rose", hex: "#f43f5e" },
+  { name: "Pink", hex: "#ec4899" },
+  { name: "Violet", hex: "#8b5cf6" },
+  { name: "Blue", hex: "#3b82f6" },
+  { name: "Cyan", hex: "#06b6d4" },
+  { name: "Emerald", hex: "#10b981" },
+];

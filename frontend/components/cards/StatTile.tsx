@@ -9,9 +9,11 @@ import { useDetailStore } from "@/store/detail";
 export function StatTile({
   entity,
   label,
+  color,
 }: {
   entity: HAEntity;
   label?: string | null;
+  color?: string | null;
 }) {
   const Icon = iconFor(entity);
   const unit = entity.attributes?.unit_of_measurement as string | undefined;
@@ -20,8 +22,11 @@ export function StatTile({
   return (
     <button type="button" onClick={() => openDetail(entity.entity_id)} className="w-full text-left">
       <Card className="flex items-center gap-3 p-4 transition hover:bg-fg/[0.07]">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fg/5">
-          <Icon className="h-5 w-5 text-sky-300" />
+        <span
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fg/5"
+          style={color ? { backgroundColor: `${color}26` } : undefined}
+        >
+          <Icon className={color ? "h-5 w-5" : "h-5 w-5 text-sky-300"} style={color ? { color } : undefined} />
         </span>
         <div className="min-w-0">
           <p className="truncate text-xs text-muted">

@@ -35,7 +35,7 @@ export function GaugeCard({
         {Number.isNaN(val) ? (
           <p className="py-8 text-muted">{e.state}</p>
         ) : (
-          <RadialGauge value={val} min={min} max={max} unit={unit} accent={sky} />
+          <RadialGauge value={val} min={min} max={max} unit={unit} accent={cfg?.color || sky} />
         )}
       </Card>
     </button>

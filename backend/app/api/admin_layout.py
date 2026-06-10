@@ -44,7 +44,20 @@ def _default_view(dash):
 
 
 def _view_dict(v):
-    return {"id": v.id, "name": v.name, "icon": v.icon, "sort": v.sort}
+    return {
+        "id": v.id,
+        "name": v.name,
+        "icon": v.icon,
+        "sort": v.sort,
+        "badges": v.badges_json or [],
+    }
+
+
+def _clean_badges(value):
+    """Sanitise a badges payload to a list of entity-id strings."""
+    if not isinstance(value, list):
+        return []
+    return [b.strip() for b in value if isinstance(b, str) and b.strip()][:30]
 
 
 def _next_sort(model, **filters):
@@ -176,6 +189,8 @@ def update_view(view_id):
         view.name = name
     if "icon" in data:
         view.icon = data["icon"] or None
+    if "badges" in data:
+        view.badges_json = _clean_badges(data["badges"]) or None
     _audit("update_view", view.name)
     db.session.commit()
     return jsonify(_view_dict(view))
@@ -327,7 +342,14 @@ def _export_dashboard(dash):
                     ],
                 }
             )
-        views.append({"name": v.name, "icon": v.icon, "sections": sections})
+        views.append(
+            {
+                "name": v.name,
+                "icon": v.icon,
+                "badges": v.badges_json or [],
+                "sections": sections,
+            }
+        )
     return {"sidra_dashboard": EXPORT_VERSION, "name": dash.name, "views": views}
 
 
@@ -364,6 +386,7 @@ def import_dashboard():
             dashboard_id=dash.id,
             name=(v.get("name") or "Home").strip() or "Home",
             icon=v.get("icon") or None,
+            badges_json=_clean_badges(v.get("badges")) or None,
             sort=vi,
         )
         db.session.add(view)

@@ -85,3 +85,31 @@ def test_duplicate_item_clones_into_same_room(auth_client):
 
     layout = next(s for s in c.get("/api/admin/layout").get_json()["sections"] if s["name"] == "Den")
     assert [i["id"] for i in layout["items"]] == [card["id"], copy["id"]]
+
+
+def test_view_badges_roundtrip(auth_client):
+    c = auth_client
+    c.post("/api/admin/sections", json={"name": "Hall"})  # seeds dashboard + view
+    layout = c.get("/api/admin/layout").get_json()
+    view_id = layout["view_id"]
+
+    # set badges (junk entries are filtered out)
+    res = c.patch(
+        f"/api/admin/views/{view_id}",
+        json={"badges": ["sensor.temp", "  ", 42, "person.sham"]},
+    )
+    assert res.get_json()["badges"] == ["sensor.temp", "person.sham"]
+
+    # public dashboard carries them per view
+    pub = c.get("/api/dashboard").get_json()
+    assert pub["views"][0]["badges"] == ["sensor.temp", "person.sham"]
+
+    # export/import keeps badges on the cloned dashboard
+    doc = c.get(f"/api/admin/dashboards/{layout['id']}/export").get_json()
+    assert doc["views"][0]["badges"] == ["sensor.temp", "person.sham"]
+    new = c.post("/api/admin/dashboards/import", json=doc).get_json()
+    imported = c.get(f"/api/admin/layout?dashboard_id={new['id']}").get_json()
+    assert imported["views"][0]["badges"] == ["sensor.temp", "person.sham"]
+
+    # clearing works
+    assert c.patch(f"/api/admin/views/{view_id}", json={"badges": []}).get_json()["badges"] == []

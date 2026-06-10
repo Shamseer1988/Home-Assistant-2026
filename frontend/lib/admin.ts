@@ -14,11 +14,14 @@ export interface ViewMeta {
   name: string;
   icon: string | null;
   sort: number;
+  badges?: string[];
 }
 export const createView = (dashboardId: number, name: string) =>
   send<ViewMeta>("POST", `/api/admin/dashboards/${dashboardId}/views`, { name });
-export const updateView = (id: number, data: { name?: string; icon?: string | null }) =>
-  send("PATCH", `/api/admin/views/${id}`, data);
+export const updateView = (
+  id: number,
+  data: { name?: string; icon?: string | null; badges?: string[] }
+) => send("PATCH", `/api/admin/views/${id}`, data);
 export const deleteView = (id: number) => send("DELETE", `/api/admin/views/${id}`);
 export const reorderViews = (order: number[]) =>
   send("POST", "/api/admin/views/reorder", { order });
