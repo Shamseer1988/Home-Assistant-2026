@@ -6,13 +6,15 @@ import {
   FileText,
   Gauge,
   Globe,
+  Grid2x2,
   LayoutGrid,
   List,
+  Rows3,
   ToggleRight,
   type LucideIcon,
 } from "lucide-react";
 
-export type CardNeeds = "entity" | "entities" | "text" | "url" | "none";
+export type CardNeeds = "entity" | "entities" | "text" | "url" | "cards" | "none";
 
 export interface CardTypeDef {
   key: string;
@@ -33,7 +35,14 @@ export const CARD_TYPES: CardTypeDef[] = [
   { key: "weather", name: "Weather", description: "Current conditions.", icon: CloudSun, needs: "entity" },
   { key: "markdown", name: "Markdown", description: "Custom text / notes.", icon: FileText, needs: "text" },
   { key: "iframe", name: "Website", description: "Embed a web page.", icon: Globe, needs: "url" },
+  { key: "stack", name: "Stack", description: "Stack cards in a vertical column.", icon: Rows3, needs: "cards" },
+  { key: "grid", name: "Grid", description: "Lay cards out in a column grid.", icon: Grid2x2, needs: "cards" },
 ];
+
+// Card types allowed *inside* a stack/grid container (single-entity, no nesting).
+export const CHILD_CARD_TYPES: CardTypeDef[] = CARD_TYPES.filter((c) =>
+  ["entity", "gauge", "graph", "button"].includes(c.key)
+);
 
 export const CARD_LABEL: Record<string, string> = Object.fromEntries(
   CARD_TYPES.map((c) => [c.key, c.name])
@@ -56,8 +65,8 @@ const WIDTH_CLS: Record<string, string> = Object.fromEntries(
 export function cardSpan(type: string, config?: Record<string, any> | null): string {
   const cols = config?.cols;
   if (cols != null && WIDTH_CLS[String(cols)] !== undefined) return WIDTH_CLS[String(cols)];
-  if (["markdown", "iframe", "entities"].includes(type)) return WIDTH_CLS.full;
-  if (["glance", "weather", "camera", "graph"].includes(type)) return "col-span-2";
+  if (["markdown", "iframe", "entities", "grid"].includes(type)) return WIDTH_CLS.full;
+  if (["glance", "weather", "camera", "graph", "stack"].includes(type)) return "col-span-2";
   return "";
 }
 

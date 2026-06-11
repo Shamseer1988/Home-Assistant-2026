@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Loader2, Plus, Search, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Loader2, Plus, Search, X } from "lucide-react";
 import { fetchPickerEntities, updateItem } from "@/lib/admin";
-import { CARD_COLORS, CARD_TYPES, WIDTH_OPTIONS } from "@/lib/cardTypes";
+import { CARD_COLORS, CARD_TYPES, CHILD_CARD_TYPES, WIDTH_OPTIONS } from "@/lib/cardTypes";
+import { type ChildCard } from "@/lib/childCard";
 import {
   CONDITION_OPS,
   normalizeConditions,
@@ -46,6 +47,8 @@ export function CardEditor({
   const [cols, setCols] = useState<string>(cfg.cols != null ? String(cfg.cols) : "auto");
   const [color, setColor] = useState<string>(cfg.color || "");
   const [conditions, setConditions] = useState<Condition[]>(normalizeConditions(cfg.conditions));
+  const [cards, setCards] = useState<ChildCard[]>(Array.isArray(cfg.cards) ? cfg.cards : []);
+  const [columns, setColumns] = useState<number>(Number(cfg.columns) || 2);
 
   const filtered = useMemo(() => {
     const t = q.toLowerCase().trim();
@@ -58,6 +61,19 @@ export function CardEditor({
   const updateCond = (i: number, patch: Partial<Condition>) =>
     setConditions((p) => p.map((c, j) => (j === i ? { ...c, ...patch } : c)));
   const removeCond = (i: number) => setConditions((p) => p.filter((_, j) => j !== i));
+
+  const addChild = () => setCards((p) => [...p, { type: "entity", entity_id: "" }]);
+  const updateChild = (i: number, patch: Partial<ChildCard>) =>
+    setCards((p) => p.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  const removeChild = (i: number) => setCards((p) => p.filter((_, j) => j !== i));
+  const moveChild = (i: number, dir: number) =>
+    setCards((p) => {
+      const j = i + dir;
+      if (j < 0 || j >= p.length) return p;
+      const n = [...p];
+      [n[i], n[j]] = [n[j], n[i]];
+      return n;
+    });
 
   // The patch we'd save — also feeds the live preview, so it stays in sync.
   const patch = useMemo(() => {
@@ -88,11 +104,16 @@ export function CardEditor({
     } else if (def.needs === "url") {
       config.url = url;
       config.title = label || undefined;
+    } else if (def.needs === "cards") {
+      config.cards = cards.filter((c) => c.entity_id);
+      config.title = label || undefined;
+      if (def.key === "grid") config.columns = columns;
+      else delete config.columns;
     } else {
       p.label = label || null;
     }
     return p;
-  }, [cfg, cols, color, conditions, def, entityId, label, service, entityIds, content, url]);
+  }, [cfg, cols, color, conditions, def, entityId, label, service, entityIds, content, url, cards, columns]);
 
   const previewItem: DashItem = {
     id: item.id,
@@ -214,6 +235,101 @@ export function CardEditor({
             placeholder="https://…"
             className="w-full rounded-xl border border-line/10 bg-fg/5 px-3 py-2 text-sm text-fg outline-none"
           />
+        )}
+
+        {def.needs === "cards" && (
+          <div>
+            {def.key === "grid" && (
+              <div className="mb-3">
+                <p className="mb-1.5 text-xs font-medium text-muted">Columns</p>
+                <div className="flex gap-1.5">
+                  {[2, 3, 4].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setColumns(n)}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                        columns === n
+                          ? "bg-sidra-sky text-white"
+                          : "border border-line/10 bg-fg/5 text-muted hover:bg-fg/10"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <p className="mb-1.5 text-xs font-medium text-muted">Cards inside</p>
+            {cards.length === 0 && (
+              <p className="mb-2 text-xs text-muted">Empty. Add cards to group them together.</p>
+            )}
+            <div className="space-y-2">
+              {cards.map((c, i) => (
+                <div key={i} className="rounded-xl border border-line/10 bg-fg/[0.03] p-2">
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value={c.type || "entity"}
+                      onChange={(e) => updateChild(i, { type: e.target.value })}
+                      className="rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+                    >
+                      {CHILD_CARD_TYPES.map((t) => (
+                        <option key={t.key} value={t.key} className="bg-panel">
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      list="cond-entities"
+                      value={c.entity_id || ""}
+                      onChange={(e) => updateChild(i, { entity_id: e.target.value })}
+                      placeholder="entity_id"
+                      className="min-w-0 flex-1 rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => moveChild(i, -1)}
+                      disabled={i === 0}
+                      title="Move up"
+                      className="rounded p-1 text-muted hover:bg-fg/10 disabled:opacity-30"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveChild(i, 1)}
+                      disabled={i === cards.length - 1}
+                      title="Move down"
+                      className="rounded p-1 text-muted hover:bg-fg/10 disabled:opacity-30"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeChild(i)}
+                      title="Remove card"
+                      className="rounded p-1 text-rose-400 hover:bg-fg/10"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <input
+                    value={c.label || ""}
+                    onChange={(e) => updateChild(i, { label: e.target.value })}
+                    placeholder="Title (optional)"
+                    className="mt-1.5 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={addChild}
+              className="mt-2 flex items-center gap-1 rounded-lg border border-dashed border-line/15 px-2.5 py-1 text-xs text-muted transition hover:bg-fg/5"
+            >
+              <Plus className="h-3 w-3" /> Add card
+            </button>
+          </div>
         )}
 
         <div>

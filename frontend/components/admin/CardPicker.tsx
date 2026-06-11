@@ -55,6 +55,8 @@ export function CardPicker({
       payload.config = { content, title: title || undefined };
     } else if (chosen.needs === "url") {
       payload.config = { url, title: title || undefined };
+    } else if (chosen.needs === "cards") {
+      payload.config = { cards: [], title: title || undefined };
     } else if (title) {
       payload.label = title;
     }
@@ -285,6 +287,13 @@ export function CardPicker({
               placeholder="https://…"
               className="w-full rounded-xl border border-line/10 bg-fg/5 px-3 py-2 text-sm text-fg outline-none"
             />
+          )}
+
+          {chosen.needs === "cards" && (
+            <p className="rounded-xl bg-fg/[0.04] px-3 py-2.5 text-xs text-muted">
+              Creates an empty {chosen.name.toLowerCase()}. Use the card’s edit button to add cards
+              inside it.
+            </p>
           )}
         </div>
       )}

@@ -11,12 +11,18 @@ import { MarkdownCard } from "./MarkdownCard";
 import { CameraCardMini } from "./CameraCardMini";
 import { WeatherMiniCard } from "./WeatherMiniCard";
 import { IframeCard } from "./IframeCard";
+import { StackCard } from "./StackCard";
+import { GridCard } from "./GridCard";
 
 export function DashCard({ item }: { item: DashItem }) {
   const cfg = (item.config || {}) as Record<string, any>;
   const ids: string[] = cfg.entities || cfg.entity_ids || [];
 
   switch (item.type) {
+    case "stack":
+      return <StackCard cards={cfg.cards} />;
+    case "grid":
+      return <GridCard cards={cfg.cards} columns={cfg.columns} />;
     case "glance":
       return <GlanceCard ids={ids} title={cfg.title} />;
     case "entities":
