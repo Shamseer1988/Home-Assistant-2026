@@ -18,6 +18,7 @@ import { RoomsCard } from "@/components/home/RoomsCard";
 import { MediaCard } from "@/components/home/MediaCard";
 import { EnergyMiniCard } from "@/components/home/EnergyMiniCard";
 import { PersonsCard } from "@/components/home/PersonsCard";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 
 export default function HomePage() {
   const setSnapshot = useEntityStore((s) => s.setSnapshot);
@@ -45,6 +46,8 @@ export default function HomePage() {
 
   return (
     <div className="space-y-4">
+      <QuickActions />
+
       {/* Two-column hero */}
       <div className="grid items-start gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">

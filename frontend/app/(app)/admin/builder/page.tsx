@@ -34,6 +34,7 @@ import type { AdminSection, ViewMeta } from "@/lib/types";
 import { BadgesEditor } from "@/components/dashboard/BadgesEditor";
 import { AppearancePanel } from "@/components/admin/AppearancePanel";
 import { DashboardsManager } from "@/components/admin/DashboardsManager";
+import { QuickActionsPanel } from "@/components/admin/QuickActionsPanel";
 import { RoomEditor } from "@/components/admin/RoomEditor";
 import { UsersPanel } from "@/components/admin/UsersPanel";
 import { VisibilityPanel } from "@/components/admin/VisibilityPanel";
@@ -302,6 +303,7 @@ export default function BuilderPage() {
         </DndContext>
       )}
 
+      <QuickActionsPanel />
       <UsersPanel />
       <AppearancePanel />
       <WidgetsPanel />
