@@ -35,6 +35,7 @@ import { BadgesEditor } from "@/components/dashboard/BadgesEditor";
 import { AppearancePanel } from "@/components/admin/AppearancePanel";
 import { DashboardsManager } from "@/components/admin/DashboardsManager";
 import { RoomEditor } from "@/components/admin/RoomEditor";
+import { UsersPanel } from "@/components/admin/UsersPanel";
 import { VisibilityPanel } from "@/components/admin/VisibilityPanel";
 import { WidgetsPanel } from "@/components/admin/WidgetsPanel";
 import { Card } from "@/components/ui/Card";
@@ -301,6 +302,7 @@ export default function BuilderPage() {
         </DndContext>
       )}
 
+      <UsersPanel />
       <AppearancePanel />
       <WidgetsPanel />
       <VisibilityPanel />

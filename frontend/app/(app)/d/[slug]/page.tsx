@@ -34,9 +34,10 @@ export default function DashboardSlugPage() {
     }
   }, [states, setSnapshot]);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["dashboard", slug],
     queryFn: () => fetchDashboardBySlug(slug),
+    retry: false,
   });
 
   if (isLoading) {
@@ -44,6 +45,18 @@ export default function DashboardSlugPage() {
       <div className="py-16 text-center">
         <Loader2 className="mx-auto h-6 w-6 animate-spin text-sidra-sky" />
       </div>
+    );
+  }
+  if (error) {
+    const forbidden = error instanceof Error && error.message.includes("403");
+    return (
+      <Empty
+        msg={
+          forbidden
+            ? "You don't have access to this dashboard."
+            : "Couldn't load this dashboard."
+        }
+      />
     );
   }
   if (!data || data.id == null) {

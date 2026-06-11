@@ -35,6 +35,8 @@ def _ensure_columns(app):
     add("dashboards", "hidden", "hidden BOOLEAN NOT NULL DEFAULT 0")
     add("sections", "view_id", "view_id INTEGER")
     add("views", "badges_json", "badges_json JSON")
+    add("dashboards", "visibility", "visibility VARCHAR(20) NOT NULL DEFAULT 'everyone'")
+    add("dashboards", "allowed_users_json", "allowed_users_json JSON")
 
 
 def _ensure_views(app):

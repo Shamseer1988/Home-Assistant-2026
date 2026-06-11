@@ -35,6 +35,8 @@ export interface DashboardMeta {
   is_default: boolean;
   hidden: boolean;
   sort: number;
+  visibility: string; // "everyone" | "admins" | "users"
+  allowed_users: string[];
 }
 export const fetchAdminDashboards = () =>
   apiGet<DashboardMeta[]>("/api/admin/dashboards");
@@ -42,10 +44,26 @@ export const createDashboard = (name: string) =>
   send("POST", "/api/admin/dashboards", { name });
 export const updateDashboard = (
   id: number,
-  data: { name?: string; hidden?: boolean; is_default?: boolean }
+  data: {
+    name?: string;
+    hidden?: boolean;
+    is_default?: boolean;
+    visibility?: string;
+    allowed_users?: string[];
+  }
 ) => send("PATCH", `/api/admin/dashboards/${id}`, data);
 export const deleteDashboard = (id: number) =>
   send("DELETE", `/api/admin/dashboards/${id}`);
+
+export interface AppUser {
+  id: number;
+  username: string;
+  email?: string | null;
+  role: string;
+}
+export const fetchUsers = () => apiGet<AppUser[]>("/api/admin/users");
+export const updateUserRole = (id: number, role: string) =>
+  send<AppUser>("PATCH", `/api/admin/users/${id}`, { role });
 
 export interface DashboardExport {
   sidra_dashboard: number;

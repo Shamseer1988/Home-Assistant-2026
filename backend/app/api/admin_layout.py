@@ -11,6 +11,7 @@ from ..extensions import db
 from ..models.audit import AuditLog
 from ..models.dashboard import Dashboard, EntityOverride, Section, SectionItem, View
 from ..models.setting import Setting
+from ..models.user import User
 from ..services.state_store import store
 from ..utils.auth import admin_required
 
@@ -240,6 +241,8 @@ def _dashboard_dict(d):
         "is_default": d.is_default,
         "hidden": d.hidden,
         "sort": d.sort,
+        "visibility": d.visibility or "everyone",
+        "allowed_users": d.allowed_users_json or [],
     }
 
 
@@ -283,6 +286,18 @@ def update_dashboard(dashboard_id):
         dash.name = name
     if "hidden" in data:
         dash.hidden = bool(data["hidden"])
+    if "visibility" in data:
+        vis = (data["visibility"] or "everyone").strip()
+        if vis not in ("everyone", "admins", "users"):
+            return jsonify({"error": "invalid visibility"}), 400
+        dash.visibility = vis
+    if "allowed_users" in data:
+        au = data["allowed_users"]
+        dash.allowed_users_json = (
+            [u.strip() for u in au if isinstance(u, str) and u.strip()]
+            if isinstance(au, list)
+            else None
+        ) or None
     if data.get("is_default"):
         Dashboard.query.update({"is_default": False})
         dash.is_default = True
@@ -311,6 +326,42 @@ def reorder_dashboards():
         Dashboard.query.filter_by(id=did).update({"sort": index})
     db.session.commit()
     return jsonify({"ok": True})
+
+
+# ---------------------------------------------------------------------- users
+def _user_dict(u):
+    return {"id": u.id, "username": u.username, "email": u.email, "role": u.role}
+
+
+@bp.get("/users")
+@admin_required
+def list_users():
+    return jsonify([_user_dict(u) for u in User.query.order_by(User.username).all()])
+
+
+@bp.patch("/users/<int:user_id>")
+@admin_required
+def update_user_role(user_id):
+    target = _get_or_404(User, user_id)
+    role = ((request.get_json(silent=True) or {}).get("role") or "").strip()
+    if role not in ("admin", "user"):
+        return jsonify({"error": "role must be 'admin' or 'user'"}), 400
+    try:
+        me_id = int(get_jwt_identity())
+    except (TypeError, ValueError):
+        me_id = None
+    if target.id == me_id:
+        return jsonify({"error": "you can't change your own role"}), 400
+    if (
+        target.role == "admin"
+        and role == "user"
+        and User.query.filter_by(role="admin").count() <= 1
+    ):
+        return jsonify({"error": "at least one admin is required"}), 400
+    target.role = role
+    _audit("update_user_role", f"{target.username}:{role}")
+    db.session.commit()
+    return jsonify(_user_dict(target))
 
 
 # ----------------------------------------------------- import / export (JSON)

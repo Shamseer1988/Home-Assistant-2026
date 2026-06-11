@@ -4,11 +4,32 @@ Returns dashboards as ordered trees of sections + items, with per-entity
 overrides applied. Live values are merged client-side from the Socket.IO stream.
 """
 from flask import Blueprint, jsonify
+from flask_jwt_extended import get_jwt, jwt_required
 
 from ..models.dashboard import Dashboard, EntityOverride
 from ..models.setting import Setting
 
 bp = Blueprint("dashboard", __name__, url_prefix="/api")
+
+
+def _viewer():
+    """(role, username) for the current request, or (None, None) if anonymous."""
+    claims = get_jwt() or {}
+    return claims.get("role"), claims.get("username")
+
+
+def _can_see(dash, role, username):
+    """Admins and the default/home dashboard are always visible (no lock-out)."""
+    if role == "admin" or dash.is_default:
+        return True
+    vis = (dash.visibility or "everyone")
+    if vis == "everyone":
+        return True
+    if vis == "admins":
+        return False
+    if vis == "users":
+        return username in (dash.allowed_users_json or [])
+    return True
 
 
 @bp.get("/settings")
@@ -18,8 +39,10 @@ def get_settings():
 
 
 @bp.get("/dashboards")
+@jwt_required(optional=True)
 def list_dashboards():
-    """All dashboards for the switcher (visible ones; admin sees hidden too)."""
+    """Dashboards for the switcher — filtered to ones the viewer may access."""
+    role, username = _viewer()
     rows = Dashboard.query.order_by(Dashboard.sort, Dashboard.id).all()
     return jsonify(
         [
@@ -32,6 +55,7 @@ def list_dashboards():
                 "sort": d.sort,
             }
             for d in rows
+            if _can_see(d, role, username)
         ]
     )
 
@@ -89,6 +113,7 @@ def _tree(dashboard):
 
 
 @bp.get("/dashboard")
+@jwt_required(optional=True)
 def get_dashboard():
     dashboard = Dashboard.query.filter_by(is_default=True).first()
     if not dashboard:
@@ -97,8 +122,12 @@ def get_dashboard():
 
 
 @bp.get("/dashboard/<slug>")
+@jwt_required(optional=True)
 def get_dashboard_by_slug(slug):
     dashboard = Dashboard.query.filter_by(slug=slug).first()
     if not dashboard:
         return jsonify({"error": "not found"}), 404
+    role, username = _viewer()
+    if not _can_see(dashboard, role, username):
+        return jsonify({"error": "You don't have access to this dashboard."}), 403
     return jsonify(_tree(dashboard))

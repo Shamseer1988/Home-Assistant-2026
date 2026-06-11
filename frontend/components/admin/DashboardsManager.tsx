@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Download, Eye, EyeOff, Pencil, Plus, Star, Trash2, Upload, X } from "lucide-react";
+import { Check, Download, Eye, EyeOff, Lock, Pencil, Plus, Shield, Star, Trash2, Upload, Users, X } from "lucide-react";
 import {
   type DashboardMeta,
   createDashboard,
@@ -10,8 +10,14 @@ import {
   importDashboard,
   updateDashboard,
 } from "@/lib/admin";
+import { AccessEditor } from "@/components/admin/AccessEditor";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
+
+function accessIcon(d: DashboardMeta) {
+  if (d.is_default || d.visibility === "everyone") return null;
+  return d.visibility === "admins" ? Lock : Users;
+}
 
 export function DashboardsManager({
   dashboards,
@@ -27,6 +33,7 @@ export function DashboardsManager({
   const [newName, setNewName] = useState("");
   const [editId, setEditId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
+  const [accessFor, setAccessFor] = useState<DashboardMeta | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const add = async () => {
@@ -109,6 +116,12 @@ export function DashboardsManager({
                     {d.is_default && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
                     {d.name}
                     <span className="text-[11px] text-muted">/{d.slug}</span>
+                    {(() => {
+                      const AccessIcon = accessIcon(d);
+                      return AccessIcon ? (
+                        <AccessIcon className="h-3.5 w-3.5 text-amber-400" />
+                      ) : null;
+                    })()}
                   </button>
                   {!d.is_default && (
                     <IconButton
@@ -140,6 +153,11 @@ export function DashboardsManager({
                   <IconButton title="Export as JSON" onClick={() => doExport(d)}>
                     <Download className="h-4 w-4" />
                   </IconButton>
+                  {!d.is_default && (
+                    <IconButton title="Who can see this" onClick={() => setAccessFor(d)}>
+                      <Shield className="h-4 w-4" />
+                    </IconButton>
+                  )}
                   {!d.is_default && (
                     <IconButton
                       title="Delete dashboard"
@@ -191,6 +209,10 @@ export function DashboardsManager({
           className="hidden"
         />
       </div>
+
+      {accessFor && (
+        <AccessEditor dashboard={accessFor} run={run} onClose={() => setAccessFor(null)} />
+      )}
     </Card>
   );
 }

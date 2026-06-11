@@ -113,3 +113,57 @@ def test_view_badges_roundtrip(auth_client):
 
     # clearing works
     assert c.patch(f"/api/admin/views/{view_id}", json={"badges": []}).get_json()["badges"] == []
+
+
+def _make_user(app, username, password, role="user"):
+    with app.app_context():
+        from app.extensions import db
+        from app.models.user import User
+
+        u = User(username=username, role=role)
+        u.set_password(password)
+        db.session.add(u)
+        db.session.commit()
+
+
+def test_dashboard_access_control(app, auth_client):
+    admin = auth_client  # logged in as the seeded admin
+    admin.post("/api/admin/sections", json={"name": "Hall"})  # seed default dashboard
+    secret = admin.post("/api/admin/dashboards", json={"name": "Secret"}).get_json()
+    admin.patch(f"/api/admin/dashboards/{secret['id']}", json={"visibility": "admins"})
+
+    # admin sees everything
+    assert secret["slug"] in [d["slug"] for d in admin.get("/api/dashboards").get_json()]
+    assert admin.get(f"/api/dashboard/{secret['slug']}").status_code == 200
+
+    # a regular user is filtered out and blocked
+    _make_user(app, "bob", "bobpass")
+    bob = app.test_client()
+    bob.post("/api/auth/login", json={"username": "bob", "password": "bobpass"})
+    assert secret["slug"] not in [d["slug"] for d in bob.get("/api/dashboards").get_json()]
+    assert bob.get(f"/api/dashboard/{secret['slug']}").status_code == 403
+    assert bob.get("/api/dashboard").status_code == 200  # home is always visible
+
+    # allow bob specifically
+    admin.patch(
+        f"/api/admin/dashboards/{secret['id']}",
+        json={"visibility": "users", "allowed_users": ["bob"]},
+    )
+    assert bob.get(f"/api/dashboard/{secret['slug']}").status_code == 200
+    assert secret["slug"] in [d["slug"] for d in bob.get("/api/dashboards").get_json()]
+
+
+def test_user_role_management(app, auth_client):
+    admin = auth_client
+    _make_user(app, "carol", "x")
+
+    users = admin.get("/api/admin/users").get_json()
+    carol = next(u for u in users if u["username"] == "carol")
+    me = next(u for u in users if u["username"] == "admin")
+
+    # promote carol
+    assert admin.patch(f"/api/admin/users/{carol['id']}", json={"role": "admin"}).status_code == 200
+    # cannot change your own role
+    assert admin.patch(f"/api/admin/users/{me['id']}", json={"role": "user"}).status_code == 400
+    # invalid role rejected
+    assert admin.patch(f"/api/admin/users/{carol['id']}", json={"role": "root"}).status_code == 400

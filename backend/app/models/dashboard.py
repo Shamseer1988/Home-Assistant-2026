@@ -20,6 +20,9 @@ class Dashboard(db.Model):
     is_default = db.Column(db.Boolean, default=False, nullable=False)
     hidden = db.Column(db.Boolean, default=False, nullable=False)
     sort = db.Column(db.Integer, default=0, nullable=False)
+    # Access control: "everyone" | "admins" | "users" (allowlist below).
+    visibility = db.Column(db.String(20), nullable=False, default="everyone")
+    allowed_users_json = db.Column(db.JSON)  # usernames, when visibility == "users"
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     sections = db.relationship(
