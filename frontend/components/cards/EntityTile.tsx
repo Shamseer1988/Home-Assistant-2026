@@ -12,10 +12,12 @@ export function EntityTile({
   entityId,
   label,
   color,
+  tapAction,
 }: {
   entityId: string;
   label?: string | null;
   color?: string | null;
+  tapAction?: import("@/lib/tapAction").TapAction;
 }) {
   // Per-entity subscription: only this tile re-renders when its entity changes.
   const entity = useEntityStore((s) => s.entities[entityId]);
@@ -32,7 +34,7 @@ export function EntityTile({
   }
 
   if (TOGGLEABLE.includes(domainOf(entityId))) {
-    return <DeviceTile entity={entity} label={label} color={color} />;
+    return <DeviceTile entity={entity} label={label} color={color} tapAction={tapAction} />;
   }
-  return <StatTile entity={entity} label={label} color={color} />;
+  return <StatTile entity={entity} label={label} color={color} tapAction={tapAction} />;
 }

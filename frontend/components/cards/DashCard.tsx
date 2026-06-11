@@ -44,7 +44,7 @@ export function DashCard({ item }: { item: DashItem }) {
     case "entity":
     default:
       return item.entity_id ? (
-        <EntityTile entityId={item.entity_id} label={item.label} color={cfg.color} />
+        <EntityTile entityId={item.entity_id} label={item.label} color={cfg.color} tapAction={cfg.tap_action} />
       ) : null;
   }
 }

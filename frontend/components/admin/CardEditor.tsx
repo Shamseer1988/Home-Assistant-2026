@@ -12,6 +12,7 @@ import {
   opNeedsValue,
   type Condition,
 } from "@/lib/conditions";
+import { TAP_ACTIONS, TAP_TYPES, type TapAction } from "@/lib/tapAction";
 import type { DashItem } from "@/lib/types";
 import { DashCard } from "@/components/cards/DashCard";
 import { Modal } from "@/components/ui/Modal";
@@ -49,6 +50,7 @@ export function CardEditor({
   const [conditions, setConditions] = useState<Condition[]>(normalizeConditions(cfg.conditions));
   const [cards, setCards] = useState<ChildCard[]>(Array.isArray(cfg.cards) ? cfg.cards : []);
   const [columns, setColumns] = useState<number>(Number(cfg.columns) || 2);
+  const [tap, setTap] = useState<TapAction>((cfg.tap_action as TapAction) || {});
 
   const filtered = useMemo(() => {
     const t = q.toLowerCase().trim();
@@ -112,8 +114,21 @@ export function CardEditor({
     } else {
       p.label = label || null;
     }
+
+    if (TAP_TYPES.includes(def.key)) {
+      const a = tap.action;
+      if (a && a !== "default") {
+        const t: TapAction = { action: a };
+        if (a === "navigate" && tap.navigation_path) t.navigation_path = tap.navigation_path;
+        if (a === "url" && tap.url_path) t.url_path = tap.url_path;
+        if (a === "call-service" && tap.service) t.service = tap.service;
+        config.tap_action = t;
+      } else {
+        delete config.tap_action;
+      }
+    }
     return p;
-  }, [cfg, cols, color, conditions, def, entityId, label, service, entityIds, content, url, cards, columns]);
+  }, [cfg, cols, color, conditions, def, entityId, label, service, entityIds, content, url, cards, columns, tap]);
 
   const previewItem: DashItem = {
     id: item.id,
@@ -385,6 +400,47 @@ export function CardEditor({
             })}
           </div>
         </div>
+
+        {TAP_TYPES.includes(def.key) && (
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-muted">Tap action</p>
+            <select
+              value={tap.action || "default"}
+              onChange={(e) => setTap((p) => ({ ...p, action: e.target.value }))}
+              className="w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
+            >
+              {TAP_ACTIONS.map((a) => (
+                <option key={a.value} value={a.value} className="bg-panel">
+                  {a.label}
+                </option>
+              ))}
+            </select>
+            {tap.action === "navigate" && (
+              <input
+                value={tap.navigation_path || ""}
+                onChange={(e) => setTap((p) => ({ ...p, navigation_path: e.target.value }))}
+                placeholder="/d/bedroom"
+                className="mt-2 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
+              />
+            )}
+            {tap.action === "url" && (
+              <input
+                value={tap.url_path || ""}
+                onChange={(e) => setTap((p) => ({ ...p, url_path: e.target.value }))}
+                placeholder="https://…"
+                className="mt-2 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
+              />
+            )}
+            {tap.action === "call-service" && (
+              <input
+                value={tap.service || ""}
+                onChange={(e) => setTap((p) => ({ ...p, service: e.target.value }))}
+                placeholder="script.movie_time"
+                className="mt-2 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
+              />
+            )}
+          </div>
+        )}
 
         <div>
           <p className="mb-1.5 text-xs font-medium text-muted">Visibility</p>

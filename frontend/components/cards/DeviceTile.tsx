@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { callService } from "@/lib/api";
 import { domainOf, friendlyName, isOn, isUnavailable, stateLabel } from "@/lib/ha";
 import { iconFor } from "@/lib/icons";
+import { useCardTap, type TapAction } from "@/lib/tapAction";
 import type { HAEntity } from "@/lib/types";
 import { useDetailStore } from "@/store/detail";
 
@@ -30,10 +31,12 @@ export function DeviceTile({
   entity,
   label,
   color,
+  tapAction,
 }: {
   entity: HAEntity;
   label?: string | null;
   color?: string | null;
+  tapAction?: TapAction;
 }) {
   const [pending, setPending] = useState(false);
   const openDetail = useDetailStore((s) => s.open);
@@ -63,17 +66,18 @@ export function DeviceTile({
       setTimeout(() => setPending(false), 400);
     }
   };
+  const onTap = useCardTap(entity.entity_id, tapAction, toggle);
 
   return (
     <motion.div
       role="button"
       tabIndex={0}
       whileTap={{ scale: 0.97 }}
-      onClick={toggle}
+      onClick={onTap}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          toggle();
+          onTap();
         }
       }}
       className={cn(
