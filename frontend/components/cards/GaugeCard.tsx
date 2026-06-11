@@ -2,7 +2,7 @@
 
 import { friendlyName } from "@/lib/ha";
 import { useAccentSky } from "@/lib/useAccent";
-import { useCardTap } from "@/lib/tapAction";
+import { cardActions, useCardGestures } from "@/lib/tapAction";
 import { useDetailStore } from "@/store/detail";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
@@ -20,7 +20,7 @@ export function GaugeCard({
   const e = useEntityStore((s) => s.entities[entityId]);
   const open = useDetailStore((s) => s.open);
   const sky = useAccentSky();
-  const onTap = useCardTap(entityId, cfg?.tap_action, () => open(entityId));
+  const { handlers } = useCardGestures(entityId, cardActions(cfg), () => open(entityId));
   if (!e) return null;
 
   const val = parseFloat(e.state);
@@ -29,7 +29,7 @@ export function GaugeCard({
   const unit = cfg?.unit ?? e.attributes?.unit_of_measurement ?? "";
 
   return (
-    <button type="button" onClick={onTap} className="w-full">
+    <button type="button" {...handlers} className="w-full">
       <Card className="flex flex-col items-center p-4 transition hover:bg-fg/[0.06]">
         <p className="mb-1 w-full truncate text-sm font-semibold text-fg">
           {label || friendlyName(e)}

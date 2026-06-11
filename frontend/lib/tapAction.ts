@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { callService } from "./api";
 import { domainOf } from "./ha";
@@ -12,6 +13,12 @@ export interface TapAction {
   service?: string;
 }
 
+export interface CardActions {
+  tap?: TapAction;
+  hold?: TapAction;
+  double_tap?: TapAction;
+}
+
 export const TAP_ACTIONS: { value: string; label: string }[] = [
   { value: "default", label: "Default" },
   { value: "more-info", label: "Show more info" },
@@ -22,21 +29,24 @@ export const TAP_ACTIONS: { value: string; label: string }[] = [
   { value: "none", label: "Do nothing" },
 ];
 
-// Card types that expose a configurable tap action in the editor.
+// Card types that expose configurable tap/hold/double-tap actions in the editor.
 export const TAP_TYPES = ["entity", "button", "gauge"];
 
-/**
- * A click handler that honours config.tap_action, falling back to the card's
- * native behaviour when the action is unset or "default".
- */
-export function useCardTap(
-  entityId: string | null | undefined,
-  tap: TapAction | undefined,
-  fallback: () => void
-) {
+const isSet = (a?: TapAction) => !!a?.action && a.action !== "default";
+
+/** Pull the three actions out of a card's config. */
+export function cardActions(cfg: Record<string, any> | null | undefined): CardActions {
+  return {
+    tap: cfg?.tap_action,
+    hold: cfg?.hold_action,
+    double_tap: cfg?.double_tap_action,
+  };
+}
+
+function useActionRunner(entityId: string | null | undefined) {
   const router = useRouter();
   const openDetail = useDetailStore((s) => s.open);
-  return () => {
+  return (tap: TapAction | undefined, fallback: () => void) => {
     const a = tap?.action;
     if (!a || a === "default") return fallback();
     switch (a) {
@@ -64,5 +74,71 @@ export function useCardTap(
       default: // "none"
         break;
     }
+  };
+}
+
+/**
+ * Gesture handlers honouring tap / hold / double-tap actions. The tap falls
+ * back to the card's native behaviour when unset; hold and double-tap only
+ * engage when configured (so a single tap stays instant by default).
+ */
+export function useCardGestures(
+  entityId: string | null | undefined,
+  actions: CardActions,
+  fallback: () => void
+) {
+  const run = useActionRunner(entityId);
+  const held = useRef(false);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHold = () => {
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+  };
+
+  const onPointerDown = () => {
+    held.current = false;
+    if (isSet(actions.hold)) {
+      holdTimer.current = setTimeout(() => {
+        held.current = true;
+        run(actions.hold, fallback);
+      }, 500);
+    }
+  };
+
+  const fire = () => {
+    clearHold();
+    if (held.current) {
+      held.current = false; // the hold already ran; swallow the trailing click
+      return;
+    }
+    if (!isSet(actions.double_tap)) {
+      run(actions.tap, fallback);
+      return;
+    }
+    if (clickTimer.current) {
+      clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+      run(actions.double_tap, fallback);
+    } else {
+      clickTimer.current = setTimeout(() => {
+        clickTimer.current = null;
+        run(actions.tap, fallback);
+      }, 250);
+    }
+  };
+
+  return {
+    handlers: {
+      onPointerDown,
+      onPointerUp: clearHold,
+      onPointerLeave: clearHold,
+      onPointerCancel: clearHold,
+      onClick: fire,
+    },
+    fire, // for keyboard activation
   };
 }

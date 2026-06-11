@@ -51,6 +51,8 @@ export function CardEditor({
   const [cards, setCards] = useState<ChildCard[]>(Array.isArray(cfg.cards) ? cfg.cards : []);
   const [columns, setColumns] = useState<number>(Number(cfg.columns) || 2);
   const [tap, setTap] = useState<TapAction>((cfg.tap_action as TapAction) || {});
+  const [hold, setHold] = useState<TapAction>((cfg.hold_action as TapAction) || {});
+  const [dbl, setDbl] = useState<TapAction>((cfg.double_tap_action as TapAction) || {});
 
   const filtered = useMemo(() => {
     const t = q.toLowerCase().trim();
@@ -76,6 +78,47 @@ export function CardEditor({
       [n[i], n[j]] = [n[j], n[i]];
       return n;
     });
+
+  const actionField = (text: string, value: TapAction, set: (v: TapAction) => void) => (
+    <div>
+      <p className="mb-1.5 text-xs font-medium text-muted">{text}</p>
+      <select
+        value={value.action || "default"}
+        onChange={(e) => set({ ...value, action: e.target.value })}
+        className="w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
+      >
+        {TAP_ACTIONS.map((a) => (
+          <option key={a.value} value={a.value} className="bg-panel">
+            {a.label}
+          </option>
+        ))}
+      </select>
+      {value.action === "navigate" && (
+        <input
+          value={value.navigation_path || ""}
+          onChange={(e) => set({ ...value, navigation_path: e.target.value })}
+          placeholder="/d/bedroom"
+          className="mt-2 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
+        />
+      )}
+      {value.action === "url" && (
+        <input
+          value={value.url_path || ""}
+          onChange={(e) => set({ ...value, url_path: e.target.value })}
+          placeholder="https://…"
+          className="mt-2 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
+        />
+      )}
+      {value.action === "call-service" && (
+        <input
+          value={value.service || ""}
+          onChange={(e) => set({ ...value, service: e.target.value })}
+          placeholder="script.movie_time"
+          className="mt-2 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
+        />
+      )}
+    </div>
+  );
 
   // The patch we'd save — also feeds the live preview, so it stays in sync.
   const patch = useMemo(() => {
@@ -116,19 +159,24 @@ export function CardEditor({
     }
 
     if (TAP_TYPES.includes(def.key)) {
-      const a = tap.action;
-      if (a && a !== "default") {
-        const t: TapAction = { action: a };
-        if (a === "navigate" && tap.navigation_path) t.navigation_path = tap.navigation_path;
-        if (a === "url" && tap.url_path) t.url_path = tap.url_path;
-        if (a === "call-service" && tap.service) t.service = tap.service;
-        config.tap_action = t;
-      } else {
-        delete config.tap_action;
-      }
+      const build = (t: TapAction): TapAction | undefined => {
+        if (!t.action || t.action === "default") return undefined;
+        const o: TapAction = { action: t.action };
+        if (t.action === "navigate" && t.navigation_path) o.navigation_path = t.navigation_path;
+        if (t.action === "url" && t.url_path) o.url_path = t.url_path;
+        if (t.action === "call-service" && t.service) o.service = t.service;
+        return o;
+      };
+      const setOrDel = (key: string, v?: TapAction) => {
+        if (v) config[key] = v;
+        else delete config[key];
+      };
+      setOrDel("tap_action", build(tap));
+      setOrDel("hold_action", build(hold));
+      setOrDel("double_tap_action", build(dbl));
     }
     return p;
-  }, [cfg, cols, color, conditions, def, entityId, label, service, entityIds, content, url, cards, columns, tap]);
+  }, [cfg, cols, color, conditions, def, entityId, label, service, entityIds, content, url, cards, columns, tap, hold, dbl]);
 
   const previewItem: DashItem = {
     id: item.id,
@@ -402,43 +450,10 @@ export function CardEditor({
         </div>
 
         {TAP_TYPES.includes(def.key) && (
-          <div>
-            <p className="mb-1.5 text-xs font-medium text-muted">Tap action</p>
-            <select
-              value={tap.action || "default"}
-              onChange={(e) => setTap((p) => ({ ...p, action: e.target.value }))}
-              className="w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
-            >
-              {TAP_ACTIONS.map((a) => (
-                <option key={a.value} value={a.value} className="bg-panel">
-                  {a.label}
-                </option>
-              ))}
-            </select>
-            {tap.action === "navigate" && (
-              <input
-                value={tap.navigation_path || ""}
-                onChange={(e) => setTap((p) => ({ ...p, navigation_path: e.target.value }))}
-                placeholder="/d/bedroom"
-                className="mt-2 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
-              />
-            )}
-            {tap.action === "url" && (
-              <input
-                value={tap.url_path || ""}
-                onChange={(e) => setTap((p) => ({ ...p, url_path: e.target.value }))}
-                placeholder="https://…"
-                className="mt-2 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
-              />
-            )}
-            {tap.action === "call-service" && (
-              <input
-                value={tap.service || ""}
-                onChange={(e) => setTap((p) => ({ ...p, service: e.target.value }))}
-                placeholder="script.movie_time"
-                className="mt-2 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-2 text-sm text-fg outline-none"
-              />
-            )}
+          <div className="space-y-3">
+            {actionField("Tap action", tap, setTap)}
+            {actionField("Hold action", hold, setHold)}
+            {actionField("Double-tap action", dbl, setDbl)}
           </div>
         )}
 

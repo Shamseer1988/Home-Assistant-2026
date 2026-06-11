@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/Card";
 import { friendlyName } from "@/lib/ha";
 import { iconFor } from "@/lib/icons";
-import { useCardTap, type TapAction } from "@/lib/tapAction";
+import { useCardGestures, type CardActions } from "@/lib/tapAction";
 import type { HAEntity } from "@/lib/types";
 import { useDetailStore } from "@/store/detail";
 
@@ -11,20 +11,22 @@ export function StatTile({
   entity,
   label,
   color,
-  tapAction,
+  actions,
 }: {
   entity: HAEntity;
   label?: string | null;
   color?: string | null;
-  tapAction?: TapAction;
+  actions?: CardActions;
 }) {
   const Icon = iconFor(entity);
   const unit = entity.attributes?.unit_of_measurement as string | undefined;
   const openDetail = useDetailStore((s) => s.open);
-  const onTap = useCardTap(entity.entity_id, tapAction, () => openDetail(entity.entity_id));
+  const { handlers } = useCardGestures(entity.entity_id, actions || {}, () =>
+    openDetail(entity.entity_id)
+  );
 
   return (
-    <button type="button" onClick={onTap} className="w-full text-left">
+    <button type="button" {...handlers} className="w-full text-left">
       <Card className="flex items-center gap-3 p-4 transition hover:bg-fg/[0.07]">
         <span
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fg/5"

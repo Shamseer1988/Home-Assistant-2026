@@ -3,7 +3,7 @@
 import { callService } from "@/lib/api";
 import { domainOf, friendlyName, isOn } from "@/lib/ha";
 import { iconFor } from "@/lib/icons";
-import { useCardTap } from "@/lib/tapAction";
+import { cardActions, useCardGestures } from "@/lib/tapAction";
 import type { HAEntity } from "@/lib/types";
 import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
@@ -32,10 +32,10 @@ export function ButtonCard({
       callService(domainOf(entityId), "toggle", { entity_id: entityId }).catch(console.error);
     }
   };
-  const onTap = useCardTap(entityId, cfg?.tap_action, press);
+  const { handlers } = useCardGestures(entityId, cardActions(cfg), press);
 
   return (
-    <button type="button" onClick={onTap} className="w-full">
+    <button type="button" {...handlers} className="w-full">
       <Card
         className={`flex flex-col items-center gap-2 p-5 transition hover:bg-fg/[0.06] ${
           on && !color ? "border-sidra-sky/40" : ""

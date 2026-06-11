@@ -1,5 +1,6 @@
 "use client";
 
+import { cardActions } from "@/lib/tapAction";
 import type { DashItem } from "@/lib/types";
 import { EntityTile } from "./EntityTile";
 import { GlanceCard } from "./GlanceCard";
@@ -44,7 +45,7 @@ export function DashCard({ item }: { item: DashItem }) {
     case "entity":
     default:
       return item.entity_id ? (
-        <EntityTile entityId={item.entity_id} label={item.label} color={cfg.color} tapAction={cfg.tap_action} />
+        <EntityTile entityId={item.entity_id} label={item.label} color={cfg.color} actions={cardActions(cfg)} />
       ) : null;
   }
 }
