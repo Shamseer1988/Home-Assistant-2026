@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, Search } from "lucide-react";
 import { addItems, createCard, fetchPickerEntities } from "@/lib/admin";
-import { CARD_TYPES, type CardTypeDef } from "@/lib/cardTypes";
+import { CARD_CATEGORIES, CARD_TYPES, type CardTypeDef } from "@/lib/cardTypes";
 import { Modal } from "@/components/ui/Modal";
 
 export function CardPicker({
@@ -33,6 +33,38 @@ export function CardPicker({
   const [service, setService] = useState("");
   const [q, setQ] = useState("");
   const [sel, setSel] = useState<Set<string>>(new Set());
+  const [cardSearch, setCardSearch] = useState("");
+  const [catFilter, setCatFilter] = useState("All");
+
+  const pickCard = (ct: CardTypeDef) => {
+    setChosen(ct);
+    setQ("");
+  };
+  const cardButton = (ct: CardTypeDef) => {
+    const Icon = ct.icon;
+    return (
+      <button
+        key={ct.key}
+        type="button"
+        onClick={() => pickCard(ct)}
+        className="flex flex-col items-start gap-2 rounded-2xl border border-line/10 bg-fg/[0.03] p-4 text-left transition hover:bg-fg/[0.06]"
+      >
+        <Icon className="h-5 w-5 text-sidra-sky" />
+        <span className="text-sm font-semibold text-fg">{ct.name}</span>
+        <span className="text-xs text-muted">{ct.description}</span>
+      </button>
+    );
+  };
+  const catMatches = useMemo(() => {
+    const term = cardSearch.toLowerCase().trim();
+    return CARD_TYPES.filter(
+      (ct) =>
+        (catFilter === "All" || ct.category === catFilter) &&
+        (!term ||
+          ct.name.toLowerCase().includes(term) ||
+          ct.description.toLowerCase().includes(term))
+    );
+  }, [cardSearch, catFilter]);
 
   const filtered = useMemo(() => {
     const term = q.toLowerCase().trim();
@@ -147,27 +179,57 @@ export function CardPicker({
         </div>
       )}
 
-      {/* Gallery */}
+      {/* Catalog */}
       {!chosen && tab === "card" && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {CARD_TYPES.map((ct) => {
-            const Icon = ct.icon;
-            return (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 rounded-xl border border-line/10 bg-fg/5 px-3">
+            <Search className="h-4 w-4 text-muted" />
+            <input
+              value={cardSearch}
+              onChange={(e) => setCardSearch(e.target.value)}
+              placeholder="Search cards…"
+              className="w-full bg-transparent py-2.5 text-sm text-fg outline-none"
+            />
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {["All", ...CARD_CATEGORIES].map((cat) => (
               <button
-                key={ct.key}
+                key={cat}
                 type="button"
-                onClick={() => {
-                  setChosen(ct);
-                  setQ("");
-                }}
-                className="flex flex-col items-start gap-2 rounded-2xl border border-line/10 bg-fg/[0.03] p-4 text-left transition hover:bg-fg/[0.06]"
+                onClick={() => setCatFilter(cat)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  catFilter === cat
+                    ? "bg-sidra-sky text-white"
+                    : "border border-line/10 bg-fg/5 text-muted hover:bg-fg/10"
+                }`}
               >
-                <Icon className="h-5 w-5 text-sidra-sky" />
-                <span className="text-sm font-semibold text-fg">{ct.name}</span>
-                <span className="text-xs text-muted">{ct.description}</span>
+                {cat}
               </button>
-            );
-          })}
+            ))}
+          </div>
+
+          {catMatches.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted">No cards match your search.</p>
+          ) : catFilter === "All" && !cardSearch.trim() ? (
+            <div className="space-y-4">
+              {CARD_CATEGORIES.map((cat) => {
+                const inCat = catMatches.filter((m) => m.category === cat);
+                if (inCat.length === 0) return null;
+                return (
+                  <div key={cat}>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                      {cat}
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {inCat.map(cardButton)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{catMatches.map(cardButton)}</div>
+          )}
         </div>
       )}
 

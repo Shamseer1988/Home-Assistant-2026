@@ -22,21 +22,25 @@ export interface CardTypeDef {
   description: string;
   icon: LucideIcon;
   needs: CardNeeds;
+  category: string;
 }
 
+// Ordered groups for the card catalog.
+export const CARD_CATEGORIES = ["Controls", "Sensors", "Groups", "Media", "Content", "Layout"];
+
 export const CARD_TYPES: CardTypeDef[] = [
-  { key: "entity", name: "Entity", description: "A single device tile.", icon: ToggleRight, needs: "entity" },
-  { key: "glance", name: "Glance", description: "A compact row of entities.", icon: LayoutGrid, needs: "entities" },
-  { key: "entities", name: "Entities list", description: "A vertical list of entities.", icon: List, needs: "entities" },
-  { key: "gauge", name: "Gauge", description: "A radial gauge for a sensor.", icon: Gauge, needs: "entity" },
-  { key: "graph", name: "Graph", description: "A sparkline of sensor history.", icon: Activity, needs: "entity" },
-  { key: "button", name: "Button", description: "Toggle a device or run a service.", icon: CircleDot, needs: "entity" },
-  { key: "camera", name: "Camera", description: "A camera snapshot.", icon: Camera, needs: "entity" },
-  { key: "weather", name: "Weather", description: "Current conditions.", icon: CloudSun, needs: "entity" },
-  { key: "markdown", name: "Markdown", description: "Custom text / notes.", icon: FileText, needs: "text" },
-  { key: "iframe", name: "Website", description: "Embed a web page.", icon: Globe, needs: "url" },
-  { key: "stack", name: "Stack", description: "Stack cards in a vertical column.", icon: Rows3, needs: "cards" },
-  { key: "grid", name: "Grid", description: "Lay cards out in a column grid.", icon: Grid2x2, needs: "cards" },
+  { key: "entity", name: "Entity", description: "A single device tile.", icon: ToggleRight, needs: "entity", category: "Controls" },
+  { key: "button", name: "Button", description: "Toggle a device or run a service.", icon: CircleDot, needs: "entity", category: "Controls" },
+  { key: "gauge", name: "Gauge", description: "A radial gauge for a sensor.", icon: Gauge, needs: "entity", category: "Sensors" },
+  { key: "graph", name: "Graph", description: "A sparkline of sensor history.", icon: Activity, needs: "entity", category: "Sensors" },
+  { key: "glance", name: "Glance", description: "A compact row of entities.", icon: LayoutGrid, needs: "entities", category: "Groups" },
+  { key: "entities", name: "Entities list", description: "A vertical list of entities.", icon: List, needs: "entities", category: "Groups" },
+  { key: "camera", name: "Camera", description: "A camera snapshot.", icon: Camera, needs: "entity", category: "Media" },
+  { key: "weather", name: "Weather", description: "Current conditions.", icon: CloudSun, needs: "entity", category: "Media" },
+  { key: "markdown", name: "Markdown", description: "Custom text / notes.", icon: FileText, needs: "text", category: "Content" },
+  { key: "iframe", name: "Website", description: "Embed a web page.", icon: Globe, needs: "url", category: "Content" },
+  { key: "stack", name: "Stack", description: "Stack cards in a vertical column.", icon: Rows3, needs: "cards", category: "Layout" },
+  { key: "grid", name: "Grid", description: "Lay cards out in a column grid.", icon: Grid2x2, needs: "cards", category: "Layout" },
 ];
 
 // Card types allowed *inside* a stack/grid container (single-entity, no nesting).
