@@ -37,6 +37,7 @@ def _ensure_columns(app):
     add("views", "badges_json", "badges_json JSON")
     add("dashboards", "visibility", "visibility VARCHAR(20) NOT NULL DEFAULT 'everyone'")
     add("dashboards", "allowed_users_json", "allowed_users_json JSON")
+    add("users", "landing_slug", "landing_slug VARCHAR(120)")
 
 
 def _ensure_views(app):

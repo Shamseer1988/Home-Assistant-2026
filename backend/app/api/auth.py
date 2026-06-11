@@ -5,6 +5,7 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
+    get_jwt,
     get_jwt_identity,
     jwt_required,
     set_access_cookies,
@@ -83,6 +84,31 @@ def me():
     user = User.query.get(int(uid))
     if not user:
         return jsonify({"error": "user not found"}), 404
+    return jsonify({"user": user.to_dict()})
+
+
+@bp.put("/landing")
+@jwt_required()
+def set_landing():
+    """Set (or clear, with slug=null) the user's preferred dashboard after login."""
+    from ..models.dashboard import Dashboard
+    from .dashboard import _can_see
+
+    user = User.query.get(int(get_jwt_identity()))
+    if not user:
+        return jsonify({"error": "user not found"}), 404
+    slug = (request.get_json(silent=True) or {}).get("slug")
+    if slug:
+        dash = Dashboard.query.filter_by(slug=slug).first()
+        if not dash:
+            return jsonify({"error": "dashboard not found"}), 404
+        claims = get_jwt()
+        if not _can_see(dash, claims.get("role"), claims.get("username")):
+            return jsonify({"error": "you can't start on a dashboard you can't access"}), 403
+        user.landing_slug = slug
+    else:
+        user.landing_slug = None
+    db.session.commit()
     return jsonify({"user": user.to_dict()})
 
 

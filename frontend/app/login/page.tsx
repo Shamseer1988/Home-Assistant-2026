@@ -16,8 +16,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     try {
-      await login({ username, password });
-      router.replace("/");
+      const u = await login({ username, password });
+      router.replace(u?.landing_slug ? `/d/${u.landing_slug}` : "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     }

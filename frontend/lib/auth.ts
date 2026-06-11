@@ -5,6 +5,7 @@ export interface User {
   username: string;
   email?: string | null;
   role: string;
+  landing_slug?: string | null;
 }
 
 export async function login(
@@ -29,6 +30,21 @@ export async function logout(): Promise<void> {
     method: "POST",
     credentials: "include",
   });
+}
+
+/** Set (or clear, with null) the user's preferred landing dashboard. */
+export async function setLanding(slug: string | null): Promise<User> {
+  const res = await fetch(`${API_URL}/api/auth/landing`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ slug }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "Could not save start page");
+  }
+  return (await res.json()).user as User;
 }
 
 /** Returns the current user, or null when not authenticated. */

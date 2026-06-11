@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Loader2, Pencil } from "lucide-react";
+import { Check, Home, Loader2, Pencil } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import { fetchDashboardBySlug } from "@/lib/dashboards";
 import { useAuth } from "@/lib/useAuth";
@@ -19,7 +19,8 @@ import { Empty } from "@/components/special/common";
 export default function DashboardSlugPage() {
   const params = useParams();
   const slug = String(params.slug);
-  const { user } = useAuth();
+  const { user, setLanding } = useAuth();
+  const isLanding = !!user && user.landing_slug === slug;
   const [edit, setEdit] = useState(false);
   const [activeView, setActiveView] = useState<number | null>(null);
 
@@ -73,18 +74,35 @@ export default function DashboardSlugPage() {
       <div className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-fg">{data.name || "Dashboard"}</h1>
         {user && (
-          <button
-            type="button"
-            onClick={() => setEdit((v) => !v)}
-            className={`flex items-center gap-2 rounded-xl border border-line/10 px-3 py-2 text-sm font-medium transition ${
-              edit
-                ? "bg-gradient-to-br from-sidra-blue to-sidra-sky text-white"
-                : "bg-fg/[0.04] text-muted hover:bg-fg/[0.08]"
-            }`}
-          >
-            {edit ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-            {edit ? "Done" : "Edit"}
-          </button>
+          <div className="flex items-center gap-2">
+            {!edit && (
+              <button
+                type="button"
+                onClick={() => setLanding(isLanding ? null : slug).catch(() => {})}
+                title={isLanding ? "This is your start page — tap to unset" : "Start here after sign-in"}
+                className={`flex items-center gap-2 rounded-xl border border-line/10 px-3 py-2 text-sm font-medium transition ${
+                  isLanding
+                    ? "bg-amber-400/15 text-amber-300"
+                    : "bg-fg/[0.04] text-muted hover:bg-fg/[0.08]"
+                }`}
+              >
+                <Home className={`h-4 w-4 ${isLanding ? "fill-amber-300" : ""}`} />
+                <span className="hidden sm:inline">{isLanding ? "Start page" : "Set start"}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setEdit((v) => !v)}
+              className={`flex items-center gap-2 rounded-xl border border-line/10 px-3 py-2 text-sm font-medium transition ${
+                edit
+                  ? "bg-gradient-to-br from-sidra-blue to-sidra-sky text-white"
+                  : "bg-fg/[0.04] text-muted hover:bg-fg/[0.08]"
+              }`}
+            >
+              {edit ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+              {edit ? "Done" : "Edit"}
+            </button>
+          </div>
         )}
       </div>
 

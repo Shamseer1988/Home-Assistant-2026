@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchMe, login as loginRequest, logout as logoutRequest } from "./auth";
+import {
+  fetchMe,
+  login as loginRequest,
+  logout as logoutRequest,
+  setLanding as setLandingRequest,
+} from "./auth";
 
 export function useAuth() {
   const qc = useQueryClient();
@@ -24,6 +29,11 @@ export function useAuth() {
     onSuccess: () => qc.setQueryData(["me"], null),
   });
 
+  const landingMutation = useMutation({
+    mutationFn: (slug: string | null) => setLandingRequest(slug),
+    onSuccess: (u) => qc.setQueryData(["me"], u),
+  });
+
   return {
     user: user ?? null,
     isLoading,
@@ -31,5 +41,6 @@ export function useAuth() {
     loginError: loginMutation.error as Error | null,
     loggingIn: loginMutation.isPending,
     logout: logoutMutation.mutateAsync,
+    setLanding: landingMutation.mutateAsync,
   };
 }
