@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { interpolateTemplate } from "@/lib/template";
+import { useEntityStore } from "@/store/entities";
 import { Card } from "@/components/ui/Card";
 
 // Minimal inline bold (**text**) renderer — no HTML injection.
@@ -18,7 +20,10 @@ function inline(text: string): ReactNode {
 }
 
 export function MarkdownCard({ content, title }: { content: string; title?: string }) {
-  const lines = (content || "").split("\n");
+  // Interpolate live values; the selector returns a string, so the card only
+  // re-renders when its visible text actually changes.
+  const rendered = useEntityStore((s) => interpolateTemplate(content, s.entities));
+  const lines = (rendered || "").split("\n");
   return (
     <Card className="p-5">
       {title && <p className="mb-2 font-semibold text-fg">{title}</p>}

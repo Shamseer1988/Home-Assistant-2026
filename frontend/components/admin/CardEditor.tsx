@@ -283,13 +283,20 @@ export function CardEditor({
         )}
 
         {def.needs === "text" && (
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={6}
-            placeholder="Markdown…"
-            className="w-full rounded-xl border border-line/10 bg-fg/5 px-3 py-2 text-sm text-fg outline-none"
-          />
+          <div>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={6}
+              placeholder="Markdown…"
+              className="w-full rounded-xl border border-line/10 bg-fg/5 px-3 py-2 text-sm text-fg outline-none"
+            />
+            <p className="mt-1 text-xs text-muted">
+              Tip: insert live values with{" "}
+              <code className="rounded bg-fg/10 px-1">{"{{ sensor.temperature }}"}</code> or{" "}
+              <code className="rounded bg-fg/10 px-1">{"{{ climate.ac.temperature }}"}</code>.
+            </p>
+          </div>
         )}
         {def.needs === "url" && (
           <input

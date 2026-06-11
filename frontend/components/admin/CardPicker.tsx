@@ -336,7 +336,7 @@ export function CardPicker({
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Markdown… (# Heading, **bold**, - list)"
+              placeholder="Markdown… (# Heading, **bold**, {{ sensor.temp }})"
               rows={6}
               className="w-full rounded-xl border border-line/10 bg-fg/5 px-3 py-2 text-sm text-fg outline-none"
             />
