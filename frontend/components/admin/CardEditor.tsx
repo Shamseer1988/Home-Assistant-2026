@@ -2,7 +2,24 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Check, Loader2, Plus, Search, X } from "lucide-react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Check, GripVertical, Loader2, Plus, Search, X } from "lucide-react";
 import { fetchPickerEntities, updateItem } from "@/lib/admin";
 import { CARD_COLORS, CARD_TYPES, CHILD_CARD_TYPES, WIDTH_OPTIONS } from "@/lib/cardTypes";
 import { type ChildCard } from "@/lib/childCard";
@@ -23,6 +40,78 @@ export interface EditableCard {
   entity_id: string | null;
   label: string | null;
   config?: Record<string, any> | null;
+}
+
+type EditChild = ChildCard & { __key: string };
+const newKey = () => Math.random().toString(36).slice(2, 9);
+
+function SortableChild({
+  child,
+  index,
+  onChange,
+  onRemove,
+}: {
+  child: EditChild;
+  index: number;
+  onChange: (i: number, patch: Partial<ChildCard>) => void;
+  onRemove: (i: number) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: child.__key,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="rounded-xl border border-line/10 bg-fg/[0.03] p-2">
+      <div className="flex items-center gap-1.5">
+        <button
+          {...attributes}
+          {...listeners}
+          type="button"
+          title="Drag to reorder"
+          className="cursor-grab touch-none rounded p-1 text-muted hover:text-fg"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <select
+          value={child.type || "entity"}
+          onChange={(e) => onChange(index, { type: e.target.value })}
+          className="rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+        >
+          {CHILD_CARD_TYPES.map((t) => (
+            <option key={t.key} value={t.key} className="bg-panel">
+              {t.name}
+            </option>
+          ))}
+        </select>
+        <input
+          list="cond-entities"
+          value={child.entity_id || ""}
+          onChange={(e) => onChange(index, { entity_id: e.target.value })}
+          placeholder="entity_id"
+          className="min-w-0 flex-1 rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => onRemove(index)}
+          title="Remove card"
+          className="rounded p-1 text-rose-400 hover:bg-fg/10"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <input
+        value={child.label || ""}
+        onChange={(e) => onChange(index, { label: e.target.value })}
+        placeholder="Title (optional)"
+        className="mt-1.5 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+      />
+    </div>
+  );
 }
 
 export function CardEditor({
@@ -48,7 +137,9 @@ export function CardEditor({
   const [cols, setCols] = useState<string>(cfg.cols != null ? String(cfg.cols) : "auto");
   const [color, setColor] = useState<string>(cfg.color || "");
   const [conditions, setConditions] = useState<Condition[]>(normalizeConditions(cfg.conditions));
-  const [cards, setCards] = useState<ChildCard[]>(Array.isArray(cfg.cards) ? cfg.cards : []);
+  const [cards, setCards] = useState<EditChild[]>(() =>
+    (Array.isArray(cfg.cards) ? (cfg.cards as ChildCard[]) : []).map((c) => ({ ...c, __key: newKey() }))
+  );
   const [columns, setColumns] = useState<number>(Number(cfg.columns) || 2);
   const [tap, setTap] = useState<TapAction>((cfg.tap_action as TapAction) || {});
   const [hold, setHold] = useState<TapAction>((cfg.hold_action as TapAction) || {});
@@ -66,18 +157,24 @@ export function CardEditor({
     setConditions((p) => p.map((c, j) => (j === i ? { ...c, ...patch } : c)));
   const removeCond = (i: number) => setConditions((p) => p.filter((_, j) => j !== i));
 
-  const addChild = () => setCards((p) => [...p, { type: "entity", entity_id: "" }]);
+  const addChild = () =>
+    setCards((p) => [...p, { type: "entity", entity_id: "", __key: newKey() }]);
   const updateChild = (i: number, patch: Partial<ChildCard>) =>
     setCards((p) => p.map((c, j) => (j === i ? { ...c, ...patch } : c)));
   const removeChild = (i: number) => setCards((p) => p.filter((_, j) => j !== i));
-  const moveChild = (i: number, dir: number) =>
+  const childSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+  const onChildDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
     setCards((p) => {
-      const j = i + dir;
-      if (j < 0 || j >= p.length) return p;
-      const n = [...p];
-      [n[i], n[j]] = [n[j], n[i]];
-      return n;
+      const oi = p.findIndex((c) => c.__key === active.id);
+      const ni = p.findIndex((c) => c.__key === over.id);
+      return oi < 0 || ni < 0 ? p : arrayMove(p, oi, ni);
     });
+  };
 
   const actionField = (text: string, value: TapAction, set: (v: TapAction) => void) => (
     <div>
@@ -150,7 +247,14 @@ export function CardEditor({
       config.url = url;
       config.title = label || undefined;
     } else if (def.needs === "cards") {
-      config.cards = cards.filter((c) => c.entity_id);
+      config.cards = cards
+        .filter((c) => c.entity_id)
+        .map((c) => {
+          const out: ChildCard = { type: c.type, entity_id: c.entity_id };
+          if (c.label) out.label = c.label;
+          if (c.config) out.config = c.config;
+          return out;
+        });
       config.title = label || undefined;
       if (def.key === "grid") config.columns = columns;
       else delete config.columns;
@@ -334,64 +438,28 @@ export function CardEditor({
             {cards.length === 0 && (
               <p className="mb-2 text-xs text-muted">Empty. Add cards to group them together.</p>
             )}
-            <div className="space-y-2">
-              {cards.map((c, i) => (
-                <div key={i} className="rounded-xl border border-line/10 bg-fg/[0.03] p-2">
-                  <div className="flex items-center gap-1.5">
-                    <select
-                      value={c.type || "entity"}
-                      onChange={(e) => updateChild(i, { type: e.target.value })}
-                      className="rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
-                    >
-                      {CHILD_CARD_TYPES.map((t) => (
-                        <option key={t.key} value={t.key} className="bg-panel">
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      list="cond-entities"
-                      value={c.entity_id || ""}
-                      onChange={(e) => updateChild(i, { entity_id: e.target.value })}
-                      placeholder="entity_id"
-                      className="min-w-0 flex-1 rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
+            <DndContext
+              sensors={childSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={onChildDragEnd}
+            >
+              <SortableContext
+                items={cards.map((c) => c.__key)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {cards.map((c, i) => (
+                    <SortableChild
+                      key={c.__key}
+                      child={c}
+                      index={i}
+                      onChange={updateChild}
+                      onRemove={removeChild}
                     />
-                    <button
-                      type="button"
-                      onClick={() => moveChild(i, -1)}
-                      disabled={i === 0}
-                      title="Move up"
-                      className="rounded p-1 text-muted hover:bg-fg/10 disabled:opacity-30"
-                    >
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveChild(i, 1)}
-                      disabled={i === cards.length - 1}
-                      title="Move down"
-                      className="rounded p-1 text-muted hover:bg-fg/10 disabled:opacity-30"
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeChild(i)}
-                      title="Remove card"
-                      className="rounded p-1 text-rose-400 hover:bg-fg/10"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  <input
-                    value={c.label || ""}
-                    onChange={(e) => updateChild(i, { label: e.target.value })}
-                    placeholder="Title (optional)"
-                    className="mt-1.5 w-full rounded-lg border border-line/10 bg-fg/5 px-2 py-1.5 text-xs text-fg outline-none"
-                  />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
             <button
               type="button"
               onClick={addChild}
